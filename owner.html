@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MS Restaurant Manager - Owner Panel</title>
+</head>
+
+<body>
+
+  <div id="loginBox">
+    <h1>MS Restaurant Manager</h1>
+    <h2>Owner Login</h2>
+
+    <input id="username" type="text" placeholder="Owner Username">
+    <input id="password" type="password" placeholder="Owner Password">
+
+    <button id="loginBtn">Login</button>
+
+    <p id="loginMessage"></p>
+  </div>
+
+  <div id="ownerPanel" style="display:none;">
+    <h1>MS Restaurant Manager</h1>
+    <h2>Owner Panel</h2>
+
+    <p id="ownerStatus">Loading owner session...</p>
+
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <script>
+    const ownerToken = sessionStorage.getItem("ownerToken");
+
+    document.getElementById("loginBtn").onclick = async () => {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!username || !password) {
+        document.getElementById("loginMessage").textContent =
+          "Username and password required";
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/owner-login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username,
+            password
+          })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          document.getElementById("loginMessage").textContent =
+            data.error || "Login failed";
+          return;
+        }
+
+        sessionStorage.setItem("ownerToken", data.token);
+        location.reload();
+
+      } catch (error) {
+        document.getElementById("loginMessage").textContent =
+          "Server connection failed";
+      }
+    };
+
+    if (ownerToken) {
+      document.getElementById("loginBox").style.display = "none";
+      document.getElementById("ownerPanel").style.display = "block";
+    }
+
+    if (!ownerToken) {
+      document.getElementById("ownerStatus").textContent =
+        "Owner login required";
+    } else {
+      fetch("/api/owner/me", {
+        headers: {
+          Authorization: "Bearer " + ownerToken
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById("ownerStatus").textContent =
+            "Owner authenticated successfully";
+        } else {
+          sessionStorage.removeItem("ownerToken");
+          document.getElementById("ownerStatus").textContent =
+            "Owner session invalid";
+        }
+      })
+      .catch(() => {
+        document.getElementById("ownerStatus").textContent =
+          "Server connection failed";
+      });
+    }
+
+    document.getElementById("logoutBtn").onclick = () => {
+      sessionStorage.removeItem("ownerToken");
+      location.reload();
+    };
+  </script>
+
+</body>
+</html>

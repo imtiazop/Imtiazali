@@ -1,0 +1,14 @@
+node_modules/
+.env
+*.db
+*.db-*
+*.db.*
+
+*.backup*
+*.before-*
+*-before-*
+cashier.html.category-stable
+manager-login-backup.html
+manager-login-working.html
+manager-working-backup.html
+server-broken-backup.js

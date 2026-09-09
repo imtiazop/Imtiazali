@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Login</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f1f5f9;
+  color:#111827;
+}
+.staffLogin{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:420px;
+  background:#fff;
+  padding:28px;
+  border-radius:18px;
+  box-shadow:0 10px 35px rgba(0,0,0,.12);
+}
+h1{margin:0 0 8px;text-align:center}
+.sub{text-align:center;color:#64748b;margin-bottom:25px}
+input{
+  width:100%;
+  padding:14px;
+  margin:7px 0;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  font-size:15px;
+}
+button{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  border:0;
+  border-radius:10px;
+  background:#111827;
+  color:white;
+  font-weight:900;
+  font-size:15px;
+}
+#error{color:#dc2626;text-align:center;margin-top:12px}
+</style>
+</head>
+<body>
+
+<div class="staffLogin">
+  <div class="card">
+    <h1>👥 Staff Login</h1>
+    <div class="sub">MS Restaurant Manager</div>
+
+    <input id="username" placeholder="🔐 Username" autocomplete="username">
+    <input id="password" type="password" placeholder="🔑 Password" autocomplete="current-password">
+
+    <button onclick="staffLogin()">Login</button>
+
+    <div id="error"></div>
+  </div>
+</div>
+
+<script>
+async function staffLogin(){
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value;
+
+  document.getElementById("error").textContent="";
+
+  if(!username || !password){
+    document.getElementById("error").textContent="Username and password required";
+    return;
+  }
+
+  try{
+    const r=await fetch("/api/staff-login",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username,password})
+    });
+
+    const data=await r.json();
+
+    if(!r.ok || !data.success){
+      throw new Error(data.error || "Login failed");
+    }
+
+    localStorage.setItem("staffToken",data.token);
+    localStorage.setItem("staffUser",JSON.stringify(data.staff));
+
+    window.location.href="/staff-panel.html";
+
+  }catch(e){
+    document.getElementById("error").textContent="❌ "+e.message;
+  }
+}
+</script>
+
+</body>
+</html>

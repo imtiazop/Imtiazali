@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Panel</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f3f4f6;
+  color:#111827;
+}
+.header{
+  background:#111827;
+  color:#fff;
+  padding:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.header h2{margin:0;font-size:20px}
+.logout{
+  border:0;
+  background:#ef4444;
+  color:#fff;
+  padding:10px 14px;
+  border-radius:9px;
+  font-weight:bold;
+}
+.container{
+  max-width:1000px;
+  margin:auto;
+  padding:15px;
+}
+.profile{
+  background:#fff;
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:15px;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.profile h3{margin-top:0}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;
+}
+.card{
+  background:#fff;
+  padding:16px;
+  border-radius:13px;
+  box-shadow:0 2px 8px rgba(0,0,0,.07);
+}
+.card h4{
+  margin:0 0 8px;
+  font-size:14px;
+  color:#6b7280;
+}
+.value{
+  font-size:22px;
+  font-weight:bold;
+}
+.section{
+  background:#fff;
+  margin-top:15px;
+  padding:18px;
+  border-radius:14px;
+  box-shadow:0 2px 8px rgba(0,0,0,.07);
+}
+.section h3{margin-top:0}
+.tableWrap{overflow-x:auto}
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:600px;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:13px;
+}
+th{background:#f9fafb}
+.loading{
+  text-align:center;
+  padding:30px;
+}
+.error{
+  background:#fee2e2;
+  color:#991b1b;
+  padding:12px;
+  border-radius:10px;
+}
+.badge{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:20px;
+  background:#e5e7eb;
+  font-size:12px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h2>👨‍🍳 Staff Panel</h2>
+  <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+
+  <div id="loading" class="loading">
+    Loading your staff record...
+  </div>
+
+  <div id="app" style="display:none">
+
+    <div class="profile">
+      <h3>👤 My Profile</h3>
+      <div id="profileData"></div>
+    </div>
+
+    <!-- TODAY ATTENDANCE -->
+    <div class="section" style="text-align:center;">
+      <h3>🕐 Today's Attendance</h3>
+
+      <div id="todayAttendance"
+           style="margin:15px 0;padding:15px;border-radius:12px;background:#f3f4f6;">
+        Checking today's attendance...
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+
+        <button id="timeInBtn"
+          onclick="startTimeIn()"
+          style="padding:16px 24px;border:0;border-radius:12px;
+                 background:#16a34a;color:white;font-size:18px;
+                 font-weight:900;cursor:pointer;">
+          📸 TIME IN
+        </button>
+
+        <button id="timeOutBtn"
+          onclick="timeOut()"
+          style="padding:16px 24px;border:0;border-radius:12px;
+                 background:#dc2626;color:white;font-size:18px;
+                 font-weight:900;cursor:pointer;">
+          🏁 TIME OUT
+        </button>
+
+      </div>
+
+      <div id="attendanceMessage"
+           style="margin-top:15px;font-weight:800;"></div>
+
+      <!-- Android camera -->
+      <input
+        id="attendanceCamera"
+        type="file"
+        accept="image/*"
+        capture="user"
+        style="display:none;"
+        onchange="handleAttendancePhoto(event)">
+    </div>
+
+
+    
+<!-- LEAVE / ABSENCE REQUEST -->
+<div id="leaveRequestSection" class="section" style="margin-top:20px;">
+  <h3>📝 Leave / Absence Request</h3>
+
+  <div style="display:grid;gap:12px;margin-top:12px;">
+
+    <input
+      id="leaveRequestDate"
+      type="date"
+      class="staffMgmtInput"
+    >
+
+    <select
+      id="leaveRequestType"
+      class="staffMgmtInput"
+    >
+      <option value="LEAVE">🏖️ Leave</option>
+      <option value="ABSENCE">❌ Absence</option>
+      <option value="SICK">🤒 Sick Leave</option>
+      <option value="EMERGENCY">🚨 Emergency</option>
+    </select>
+
+    <textarea
+      id="leaveRequestReason"
+      class="staffMgmtInput"
+      rows="3"
+      placeholder="Reason / details"
+    ></textarea>
+
+    <button
+      onclick="submitLeaveRequest()"
+      style="padding:14px;border:0;border-radius:10px;
+             background:#2563eb;color:white;
+             font-size:16px;font-weight:900;cursor:pointer;"
+    >
+      📤 Submit Request
+    </button>
+
+    <div id="leaveRequestMessage"
+         style="font-weight:800;"></div>
+
+  </div>
+
+  <div style="margin-top:20px;">
+    <h4>📋 My Requests</h4>
+    <div id="myLeaveRequests">
+      Loading requests...
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+
+      <div class="card">
+        <h4>Monthly Salary</h4>
+        <div class="value" id="salaryValue">0</div>
+      </div>
+
+      <div class="card">
+        <h4>Present Days</h4>
+        <div class="value" id="presentValue">0</div>
+      </div>
+
+      <div class="card">
+        <h4>Late Days</h4>
+        <div class="value" id="lateValue">0</div>
+      </div>
+
+      <div class="card">
+        <h4>Work Orders</h4>
+        <div class="value" id="ordersValue">0</div>
+      </div>
+
+    </div>
+
+    <div class="section">
+      <h3>📅 My Attendance</h3>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Check In</th>
+              <th>Check Out</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>💰 My Salary</h3>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Basic</th>
+              <th>Bonus</th>
+              <th>Deduction</th>
+              <th>Advance</th>
+              <th>Paid</th>
+              <th>Balance</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="salaryTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>💳 My Account</h3>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody id="accountTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>🧾 My Work Record</h3>
+      <div class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Work Type</th>
+              <th>Orders</th>
+              <th>Amount</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody id="workTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>📜 Staff Guidelines</h3>
+      <div id="guidelines"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem("staffToken");
+
+if (!token) {
+  location.href = "staff.html";
+}
+
+let staff = null;
+
+async function api(url){
+  const response = await fetch(url,{
+    headers:{
+      "Authorization":"Bearer " + token
+    }
+  });
+
+  const data = await response.json();
+
+  if(response.status === 401){
+    logout();
+    throw new Error(data.error || "Login expired");
+  }
+
+  if(!response.ok || data.success === false){
+    throw new Error(data.error || "Request failed");
+  }
+
+  return data;
+}
+
+function money(value){
+  return "Rs. " + Number(value || 0).toLocaleString();
+}
+
+function logout(){
+  localStorage.removeItem("staffToken");
+  localStorage.removeItem("staffUser");
+  location.href="staff.html";
+}
+
+function esc(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+
+// ================= TODAY ATTENDANCE =================
+
+let pendingAttendanceAction = null;
+
+function showAttendanceMessage(message, success=true){
+  const el = document.getElementById("attendanceMessage");
+  if(!el) return;
+  el.textContent = message;
+  el.style.color = success ? "#15803d" : "#dc2626";
+}
+
+async function loadTodayAttendance(){
+  try{
+    const data = await api("/api/staff/me/today-attendance");
+    const a = data.attendance;
+
+    const box = document.getElementById("todayAttendance");
+    const timeInBtn = document.getElementById("timeInBtn");
+    const timeOutBtn = document.getElementById("timeOutBtn");
+
+    if(!a){
+      box.innerHTML = "<b>Not marked yet</b><div style='margin-top:6px;font-size:13px;'>Please press TIME IN when you arrive.</div>";
+      timeInBtn.disabled = false;
+      timeOutBtn.disabled = true;
+      timeOutBtn.style.opacity = "0.45";
+      return;
+    }
+
+    const late = Number(a.late_minutes || 0);
+    const worked = Number(a.worked_minutes || 0);
+    const workedHours = Math.floor(worked / 60);
+    const workedMins = worked % 60;
+
+    box.innerHTML = `
+      <div style="font-size:17px;font-weight:900;">${esc(a.status || "PRESENT")}</div>
+      <div style="margin-top:8px;">📸 <b>TIME IN:</b> ${esc(a.time_in || "-")}</div>
+      <div>🏁 <b>TIME OUT:</b> ${esc(a.time_out || "-")}</div>
+      <div>⏱️ <b>Worked:</b> ${worked ? workedHours + "h " + workedMins + "m" : "-"}</div>
+      ${late > 0 ? `<div style="color:#dc2626;margin-top:5px;">⚠️ Late by ${late} minute(s)</div>` : ""}
+    `;
+
+    timeInBtn.disabled = true;
+    timeInBtn.style.opacity = "0.45";
+
+    if(a.time_out){
+      timeOutBtn.disabled = true;
+      timeOutBtn.style.opacity = "0.45";
+    }else{
+      timeOutBtn.disabled = false;
+      timeOutBtn.style.opacity = "1";
+    }
+
+  }catch(error){
+    showAttendanceMessage(error.message, false);
+  }
+}
+
+function startTimeIn(){
+  if(!staff){
+    showAttendanceMessage("Staff record is still loading.", false);
+    return;
+  }
+
+  pendingAttendanceAction = "TIME_IN";
+
+  const camera = document.getElementById("attendanceCamera");
+
+  if(!camera){
+    showAttendanceMessage("Camera input not found.", false);
+    return;
+  }
+
+  camera.value = "";
+  camera.click();
+}
+
+function compressAttendancePhoto(file){
+  return new Promise((resolve,reject)=>{
+    if(!file){
+      reject(new Error("Photo not selected."));
+      return;
+    }
+
+    if(!file.type.startsWith("image/")){
+      reject(new Error("Please select an image."));
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function(event){
+      const img = new Image();
+
+      img.onload = function(){
+        const maxWidth = 700;
+        const scale = Math.min(1, maxWidth / img.width);
+        const width = Math.round(img.width * scale);
+        const height = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.72));
+      };
+
+      img.onerror = function(){
+        reject(new Error("Could not process camera photo."));
+      };
+
+      img.src = event.target.result;
+    };
+
+    reader.onerror = function(){
+      reject(new Error("Could not read camera photo."));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleAttendancePhoto(event){
+  if(pendingAttendanceAction !== "TIME_IN") return;
+
+  const file = event.target.files && event.target.files[0];
+
+  if(!file){
+    showAttendanceMessage("TIME IN cancelled — photo is required.", false);
+    pendingAttendanceAction = null;
+    return;
+  }
+
+  try{
+    showAttendanceMessage("Uploading photo and recording TIME IN...");
+
+    const photo = await compressAttendancePhoto(file);
+
+    const response = await fetch("/api/staff/me/time-in",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body:JSON.stringify({photo:photo})
+    });
+
+    const data = await response.json();
+
+    if(response.status === 401){
+      logout();
+      return;
+    }
+
+    if(!response.ok || data.success === false){
+      throw new Error(data.error || "TIME IN failed");
+    }
+
+    showAttendanceMessage(data.message || "TIME IN recorded successfully.");
+
+    await loadTodayAttendance();
+
+    const attendance = await api(
+      "/api/staff/" + staff.id +
+      "/attendance?restaurant_id=" + staff.restaurant_id
+    );
+
+    renderAttendance(attendance.attendance || []);
+
+  }catch(error){
+    showAttendanceMessage("❌ " + error.message, false);
+  }finally{
+    pendingAttendanceAction = null;
+    event.target.value = "";
+  }
+}
+
+async function timeOut(){
+  if(!staff){
+    showAttendanceMessage("Staff record is still loading.", false);
+    return;
+  }
+
+  try{
+    if(!confirm("Are you sure you want to record TIME OUT now?")) return;
+
+    showAttendanceMessage("Recording TIME OUT...");
+
+    const response = await fetch("/api/staff/me/time-out",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body:JSON.stringify({})
+    });
+
+    const data = await response.json();
+
+    if(response.status === 401){
+      logout();
+      return;
+    }
+
+    if(!response.ok || data.success === false){
+      throw new Error(data.error || "TIME OUT failed");
+    }
+
+    const worked = Number(data.attendance?.worked_minutes || 0);
+    const hours = Math.floor(worked / 60);
+    const minutes = worked % 60;
+
+    showAttendanceMessage(
+      `🏁 TIME OUT recorded — Worked ${hours}h ${minutes}m`
+    );
+
+    await loadTodayAttendance();
+
+    const attendance = await api(
+      "/api/staff/" + staff.id +
+      "/attendance?restaurant_id=" + staff.restaurant_id
+    );
+
+    renderAttendance(attendance.attendance || []);
+
+  }catch(error){
+    showAttendanceMessage("❌ " + error.message, false);
+  }
+}
+
+
+// ================= LEAVE REQUEST =================
+
+async function submitLeaveRequest(){
+  const date = document.getElementById("leaveRequestDate")?.value || "";
+  const type = document.getElementById("leaveRequestType")?.value || "LEAVE";
+  const reason = document.getElementById("leaveRequestReason")?.value.trim() || "";
+  const msg = document.getElementById("leaveRequestMessage");
+
+  if(!date){
+    msg.textContent = "❌ Please select a date.";
+    msg.style.color = "#dc2626";
+    return;
+  }
+
+  if(!reason){
+    msg.textContent = "❌ Please enter a reason.";
+    msg.style.color = "#dc2626";
+    return;
+  }
+
+  try{
+    msg.textContent = "Submitting request...";
+    msg.style.color = "#2563eb";
+
+    const response = await fetch("/api/staff/me/leave-request",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + token
+      },
+      body:JSON.stringify({
+        request_date: date,
+        request_type: type,
+        reason: reason
+      })
+    });
+
+    const data = await response.json();
+
+    if(response.status === 401){
+      logout();
+      return;
+    }
+
+    if(!response.ok || data.success === false){
+      throw new Error(data.error || "Request failed");
+    }
+
+    msg.textContent = "✅ Leave / absence request submitted.";
+    msg.style.color = "#15803d";
+
+    document.getElementById("leaveRequestReason").value = "";
+
+    await loadMyLeaveRequests();
+
+  }catch(error){
+    msg.textContent = "❌ " + error.message;
+    msg.style.color = "#dc2626";
+  }
+}
+
+async function loadMyLeaveRequests(){
+  try{
+    const data = await api("/api/staff/me/leave-requests");
+    const box = document.getElementById("myLeaveRequests");
+
+    if(!data.requests || !data.requests.length){
+      box.innerHTML = "<div style='padding:12px;background:#f3f4f6;border-radius:10px;'>No requests yet.</div>";
+      return;
+    }
+
+    box.innerHTML = data.requests.map(r => `
+      <div style="
+        padding:12px;
+        margin:8px 0;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+        background:#fff;
+      ">
+        <b>${esc(r.request_type)}</b>
+        — ${esc(r.request_date)}
+        <div style="margin-top:5px;">
+          ${esc(r.reason)}
+        </div>
+        <div style="
+          margin-top:7px;
+          font-weight:900;
+          color:${
+            r.status === "APPROVED"
+              ? "#15803d"
+              : r.status === "REJECTED"
+                ? "#dc2626"
+                : "#d97706"
+          };
+        ">
+          Status: ${esc(r.status)}
+        </div>
+        ${
+          r.manager_note
+            ? `<div style="margin-top:5px;">Manager: ${esc(r.manager_note)}</div>`
+            : ""
+        }
+      </div>
+    `).join("");
+
+  }catch(error){
+    const box = document.getElementById("myLeaveRequests");
+    if(box) box.textContent = "❌ " + error.message;
+  }
+}
+
+async function loadPanel(){
+
+  try{
+
+    const me = await api("/api/staff/me");
+    staff = me.staff;
+
+    document.getElementById("profileData").innerHTML = `
+      <div><b>Name:</b> ${esc(staff.name)}</div>
+      <div><b>Role:</b> ${esc(staff.role)}</div>
+      <div><b>Employee Code:</b> ${esc(staff.employee_code || "-")}</div>
+      <div><b>Phone:</b> ${esc(staff.phone || "-")}</div>
+      <div><b>Joining Date:</b> ${esc(staff.joining_date || "-")}</div>
+      <div><b>Status:</b> <span class="badge">${esc(staff.status)}</span></div>
+    `;
+
+    document.getElementById("salaryValue").textContent =
+      money(staff.monthly_salary);
+
+    const attendance = await api(
+      "/api/staff/" + staff.id + "/attendance?restaurant_id=" +
+      staff.restaurant_id
+    );
+
+    const salary = await api(
+      "/api/staff/" + staff.id + "/salary?restaurant_id=" +
+      staff.restaurant_id
+    );
+
+    const account = await api(
+      "/api/staff/" + staff.id + "/account?restaurant_id=" +
+      staff.restaurant_id
+    );
+
+    const work = await api(
+      "/api/staff/" + staff.id + "/work-records?restaurant_id=" +
+      staff.restaurant_id
+    );
+
+    const guidelines = await api(
+      "/api/staff/guidelines?restaurant_id=" +
+      staff.restaurant_id
+    );
+
+    renderAttendance(attendance.attendance || []);
+    renderSalary(salary.salary || []);
+    renderAccount(account.transactions || []);
+    renderWork(work.records || []);
+    renderGuidelines(guidelines.guidelines || []);
+
+    document.getElementById("loading").style.display="none";
+    document.getElementById("app").style.display="block";
+
+  }catch(error){
+
+    document.getElementById("loading").innerHTML =
+      '<div class="error">❌ ' + esc(error.message) + '</div>';
+
+  }
+}
+
+function renderAttendance(rows){
+
+  let present=0;
+  let late=0;
+
+  document.getElementById("attendanceTable").innerHTML =
+    rows.map(r=>{
+
+      if(r.status==="PRESENT") present++;
+      if(r.status==="LATE") late++;
+
+      return `
+        <tr>
+          <td>${esc(r.attendance_date)}</td>
+          <td><span class="badge">${esc(r.status)}</span></td>
+          <td>${esc(r.check_in || "-")}</td>
+          <td>${esc(r.check_out || "-")}</td>
+          <td>${esc(r.notes || "-")}</td>
+        </tr>
+      `;
+
+    }).join("") || `
+      <tr><td colspan="5">No attendance records found.</td></tr>
+    `;
+
+  document.getElementById("presentValue").textContent=present;
+  document.getElementById("lateValue").textContent=late;
+}
+
+function renderSalary(rows){
+
+  document.getElementById("salaryTable").innerHTML =
+    rows.map(r=>{
+
+      const net =
+        Number(r.basic_salary||0) +
+        Number(r.bonus||0) -
+        Number(r.deduction||0) -
+        Number(r.advance||0);
+
+      const balance =
+        net - Number(r.paid_amount||0);
+
+      return `
+        <tr>
+          <td>${esc(r.salary_month)}</td>
+          <td>${money(r.basic_salary)}</td>
+          <td>${money(r.bonus)}</td>
+          <td>${money(r.deduction)}</td>
+          <td>${money(r.advance)}</td>
+          <td>${money(r.paid_amount)}</td>
+          <td>${money(balance)}</td>
+          <td><span class="badge">${esc(r.status)}</span></td>
+        </tr>
+      `;
+
+    }).join("") || `
+      <tr><td colspan="8">No salary records found.</td></tr>
+    `;
+}
+
+function renderAccount(rows){
+
+  document.getElementById("accountTable").innerHTML =
+    rows.map(r=>`
+      <tr>
+        <td>${esc(r.transaction_date)}</td>
+        <td><span class="badge">${esc(r.type)}</span></td>
+        <td>${money(r.amount)}</td>
+        <td>${esc(r.description || "-")}</td>
+      </tr>
+    `).join("") || `
+      <tr><td colspan="4">No account transactions found.</td></tr>
+    `;
+}
+
+function renderWork(rows){
+
+  let orders=0;
+
+  rows.forEach(r=>{
+    orders += Number(r.order_count || 0);
+  });
+
+  document.getElementById("ordersValue").textContent=orders;
+
+  document.getElementById("workTable").innerHTML =
+    rows.map(r=>`
+      <tr>
+        <td>${esc(r.work_date)}</td>
+        <td>${esc(r.work_type)}</td>
+        <td>${esc(r.order_count || 0)}</td>
+        <td>${money(r.amount)}</td>
+        <td>${esc(r.description || "-")}</td>
+      </tr>
+    `).join("") || `
+      <tr><td colspan="5">No work records found.</td></tr>
+    `;
+}
+
+function renderGuidelines(rows){
+
+  document.getElementById("guidelines").innerHTML =
+    rows.filter(r=>Number(r.active)===1)
+    .map(r=>`
+      <div style="
+        padding:12px;
+        margin-bottom:10px;
+        background:#f9fafb;
+        border-radius:10px;
+      ">
+        <b>${esc(r.title)}</b>
+        <div style="margin-top:5px">
+          ${esc(r.description || "")}
+        </div>
+      </div>
+    `).join("") || "No guidelines available.";
+}
+
+loadPanel();
+</script>
+
+</body>
+</html>

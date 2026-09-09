@@ -1,0 +1,3930 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MS Restaurant Manager - Cashier POS</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ font-family:Arial,sans-serif;
+ background:#eef1f5;
+ color:#111827;
+}
+
+.topbar{
+ background:#111827;
+ color:white;
+ padding:16px 24px;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ position:sticky;
+ top:0;
+ z-index:1000;
+ box-shadow:0 3px 15px #0002;
+}
+
+.topbar h2{
+ margin:0;
+ font-size:22px;
+}
+
+.pos{
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 360px;
+ gap:16px;
+ padding:18px;
+ width:100%;
+ max-width:1600px;
+ margin:auto;
+}
+
+.panel{
+ background:white;
+ border-radius:16px;
+ padding:18px;
+ box-shadow:0 3px 15px #0001;
+ border:1px solid #e5e7eb;
+}
+
+.panel h3{
+ margin:0 0 14px;
+ font-size:18px;
+}
+
+.categories{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+ gap:12px;
+}
+
+.categories button{
+ width:100%;
+ min-height:72px;
+ padding:12px;
+ margin:0;
+ border:1px solid #e5e7eb;
+ border-radius:16px;
+ background:#f8fafc;
+ color:#111827;
+ font-size:15px;
+ font-weight:800;
+ cursor:pointer;
+ transition:.2s ease;
+ box-shadow:0 3px 10px #0001;
+}
+
+.categories button:hover{
+ transform:translateY(-2px);
+ box-shadow:0 7px 18px #0002;
+}
+
+.categories button.active{
+ background:#111827;
+ color:white;
+ border-color:#111827;
+ transform:translateY(-2px);
+}
+
+.products{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+ gap:12px;
+}
+
+.product{
+ min-height:110px;
+ border:1px solid #e5e7eb;
+ border-radius:15px;
+ padding:15px;
+ cursor:pointer;
+ background:white;
+ transition:.2s ease;
+ box-shadow:0 2px 8px #0001;
+}
+
+.product:hover{
+ transform:translateY(-3px);
+ box-shadow:0 8px 20px #0002;
+}
+
+.product .name{
+ font-weight:800;
+ font-size:16px;
+}
+
+.price{
+ margin-top:10px;
+ font-weight:900;
+ font-size:17px;
+}
+
+.stock{
+ font-size:12px;
+ color:#6b7280;
+ margin-top:5px;
+}
+
+.cart-item,.pending{
+ background:#f3f4f6;
+ padding:11px;
+ border-radius:10px;
+ margin:7px 0;
+}
+
+.qty button{
+ width:32px;
+ padding:6px;
+ margin:0 3px;
+ border:0;
+ border-radius:6px;
+ cursor:pointer;
+}
+
+.total{
+ font-size:24px;
+ font-weight:900;
+ margin:15px 0;
+ padding-top:12px;
+ border-top:1px solid #e5e7eb;
+}
+
+.mainbtn{
+ width:100%;
+ padding:14px;
+ border:0;
+ border-radius:12px;
+ background:#16a34a;
+ color:white;
+ font-weight:800;
+ font-size:16px;
+ cursor:pointer;
+}
+
+.smallbtn{
+ padding:8px;
+ border:0;
+ border-radius:7px;
+ margin-top:5px;
+ cursor:pointer;
+}
+
+/* ORDER DETAILS */
+#customerName,
+#customerPhone,
+#orderType,
+#tableNo,
+#orderTakerName,
+#orderTakerPhone,
+#riderName,
+#riderPhone,
+#deliveryAddress,
+#orderNotes{
+ width:100%;
+ border:1px solid #d1d5db;
+ border-radius:10px;
+ font-size:14px;
+ outline:none;
+}
+
+#customerName,
+#customerPhone,
+#orderType,
+#tableNo,
+#orderTakerName,
+#orderTakerPhone,
+#riderName,
+#riderPhone,
+#deliveryAddress{
+ padding:12px;
+}
+
+/* TABLET */
+@media(max-width:1100px){
+ .pos{
+  grid-template-columns:minmax(0,1fr) 300px;
+ }
+ .categories{
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+ }
+ .products{
+  grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
+ }
+}
+
+/* MOBILE */
+@media(max-width:700px){
+ .topbar{
+  padding:13px 15px;
+ }
+
+ .topbar h2{
+  font-size:18px;
+ }
+
+ .pos{
+  grid-template-columns:1fr;
+  padding:10px;
+  gap:10px;
+ }
+
+ .panel{
+  padding:13px;
+  border-radius:13px;
+ }
+
+ .categories{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:9px;
+ }
+
+ .categories button{
+  min-height:62px;
+  font-size:14px;
+ }
+
+ .products{
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+ }
+
+ .product{
+  min-height:100px;
+  padding:11px;
+ }
+
+ .right{
+  grid-column:auto;
+ }
+}
+
+/* SMALL PHONES */
+@media(max-width:380px){
+ .products{
+  grid-template-columns:1fr 1fr;
+ }
+
+ .categories button{
+  font-size:13px;
+ }
+}
+</style>
+</head>
+
+<body>
+
+<div id="cashierLoginScreen" style="
+  min-height:calc(100vh - 70px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:25px;
+  box-sizing:border-box;
+  background:#f1f5f9;
+">
+  <div style="
+    width:100%;
+    max-width:400px;
+    background:#fff;
+    border-radius:20px;
+    padding:25px;
+    box-sizing:border-box;
+    box-shadow:0 12px 35px rgba(15,23,42,.12);
+    text-align:center;
+  ">
+
+    <div style="font-size:42px;">🔐</div>
+
+    <div id="cashierTillTitle" style="
+      margin-top:8px;
+      font-size:24px;
+      font-weight:900;
+      color:#111827;
+    ">
+      Cashier
+    </div>
+
+    <div style="
+      margin-top:5px;
+      color:#64748b;
+      font-size:13px;
+    ">
+      Enter your Lock Code / PIN
+    </div>
+
+    <input id="cashierTillPin"
+      type="password"
+      inputmode="numeric"
+      autocomplete="off"
+      placeholder="🔢 Lock Code / PIN"
+      style="
+        width:100%;
+        padding:15px;
+        margin-top:20px;
+        border:1px solid #cbd5e1;
+        border-radius:12px;
+        box-sizing:border-box;
+        font-size:18px;
+        text-align:center;
+        letter-spacing:4px;
+      ">
+
+    <button onclick="cashierLogin()" style="
+      width:100%;
+      padding:15px;
+      margin-top:12px;
+      border:0;
+      border-radius:12px;
+      background:#111827;
+      color:#fff;
+      font-weight:900;
+      font-size:16px;
+    ">
+      🔓 UNLOCK CASHIER
+    </button>
+
+    <div id="cashierLoginMessage" style="
+      margin-top:12px;
+      min-height:20px;
+      font-size:13px;
+      font-weight:800;
+    "></div>
+
+  </div>
+</div>
+
+<div class="pos" id="cashierPOS" style="display:none;">
+
+<!-- ORDER DETAILS FIRST -->
+<div class="panel" style="grid-column:1/-1">
+ <h3>📝 Order Details</h3>
+
+ <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+
+  <input id="customerName" placeholder="👤 Customer Name">
+
+  <input id="customerPhone" placeholder="📱 Customer Phone">
+
+  <select id="orderType" onchange="toggleOrderFields()">
+   <option value="Dine-In">🍽️ Dine-In</option>
+   <option value="Takeaway">🥡 Takeaway</option>
+   <option value="Home Delivery">🏠 Home Delivery</option>
+  </select>
+
+  <input id="tableNo" placeholder="🪑 Table No.">
+
+  <select id="orderTakerName">
+   <option value="">👨‍💼 Select Order Taker / Tracker</option>
+  </select>
+
+  <input id="orderTakerPhone" placeholder="📞 Order Taker Phone">
+
+  <input id="riderName" placeholder="🛵 Rider Name">
+
+  <input id="riderPhone" placeholder="📞 Rider Phone">
+
+  <input id="deliveryAddress"
+         placeholder="🏠 Delivery Address"
+         style="grid-column:1/-1">
+
+  <textarea id="orderNotes"
+            placeholder="📝 Special Instructions / Notes"
+            style="padding:12px;min-height:70px;grid-column:1/-1"></textarea>
+
+ </div>
+</div>
+
+
+<!-- ===== PROFESSIONAL POS WORKSPACE ===== -->
+
+<div class="posWorkspace">
+
+ <!-- LEFT: RUNNING ORDERS -->
+ <div class="panel runningPanel">
+  <h3>🔄 Running Orders</h3>
+  <div id="pendingOrders">No running orders</div>
+ </div>
+
+ <!-- CENTER: CATEGORIES + PRODUCTS -->
+ <div class="centerWorkspace">
+
+  <div class="panel categoriesPanel">
+   <h3>📂 Categories</h3>
+   <div id="categories" class="categories"></div>
+  </div>
+
+  <div class="panel productsPanel">
+   <h3 id="categoryTitle">🍽️ Select a Category</h3>
+   <input id="productSearch" type="text" placeholder="🔎 Search product..." autocomplete="off">
+   <div id="products" class="products">
+    Select a category to view products
+   </div>
+  </div>
+
+ </div>
+
+ <!-- RIGHT: CURRENT ORDER -->
+ <div class="panel currentOrderPanel">
+  <h3>🛒 Current Order</h3>
+
+  <div id="cart">Cart empty</div>
+
+  <div class="total">
+   Total: Rs. <span id="total">0</span>
+  </div>
+
+  <button class="mainbtn" onclick="placeOrder()">
+   🟢 Place Order
+  </button>
+ </div>
+
+</div>
+
+<!-- END POS WORKSPACE --></div></div>
+
+<script>
+
+function cashierAuthHeaders(){
+ const token=sessionStorage.getItem("cashier_till_session");
+
+ return token
+  ? {"Authorization":"Bearer "+token}
+  : {};
+}
+
+async function cashierLogin(){
+
+  const pin=document.getElementById("cashierTillPin")?.value.trim();
+  const msg=document.getElementById("cashierLoginMessage");
+
+  if(!pin){
+    if(msg){
+      msg.style.color="#b91c1c";
+      msg.textContent="❌ Lock Code / PIN required hai.";
+    }
+    return;
+  }
+
+  if(msg){
+    msg.style.color="#475569";
+    msg.textContent="⏳ PIN checking...";
+  }
+
+  try{
+
+    const params=new URLSearchParams(window.location.search);
+    const tillId=params.get("till");
+
+    if(!tillId){
+      if(msg){
+        msg.style.color="#b91c1c";
+        msg.textContent="❌ Cashier Till identify nahi hua.";
+      }
+      return;
+    }
+
+    const r=await fetch("/api/cashier-till-login",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        till_id:Number(tillId),
+        lock_code:pin
+      })
+    });
+
+    const data=await r.json();
+
+    if(!r.ok || !data.success){
+      if(msg){
+        msg.style.color="#b91c1c";
+        msg.textContent="❌ "+(data.error||"Login failed");
+      }
+      return;
+    }
+
+    sessionStorage.setItem(
+      "cashier_till_session",
+      data.token || ""
+    );
+
+    sessionStorage.setItem(
+      "cashier_till_id",
+      String(data.till.id)
+    );
+
+    sessionStorage.setItem(
+      "cashier_till_name",
+      data.till.till_name
+    );
+
+    const title=document.getElementById("cashierTillTitle");
+
+    if(title){
+      title.textContent=data.till.till_name;
+    }
+
+    const loginScreen=document.getElementById("cashierLoginScreen");
+    const cashierPOS=document.getElementById("cashierPOS");
+
+    if(cashierPOS){
+      cashierPOS.style.display="grid";
+    }
+
+    if(loginScreen){
+      loginScreen.style.display="none";
+    }
+
+    if(msg){
+      msg.textContent="";
+    }
+
+    await loadCashierBusinessDay();
+
+    if(typeof loadProducts==="function"){
+      await loadProducts();
+    }
+
+  }catch(e){
+
+    console.error("CASHIER TILL LOGIN ERROR:",e);
+
+    if(msg){
+      msg.style.color="#b91c1c";
+      msg.textContent="⚠️ Server connection failed.";
+    }
+  }
+}
+
+let products=[];
+let cart=[];
+let pendingOrders=[];
+let selectedCategory="All";
+
+async function loadProducts(){
+
+ const el=document.getElementById("categories");
+
+ if(el) el.innerHTML='<div style="padding:15px;font-weight:800;">⏳ LOADING CATEGORIES...</div>';
+
+ try{
+
+  const r=await fetch("/api/products?restaurant_id=1");
+
+  if(!r.ok) throw new Error("API HTTP " + r.status);
+
+  products=await r.json();
+
+  if(el) el.innerHTML='<div style="padding:15px;font-weight:800;">✅ PRODUCTS: '+products.length+' — BUILDING CATEGORIES...</div>';
+
+  buildCategories();
+  showProducts();
+
+ }catch(err){
+
+  if(el) el.innerHTML='<div style="padding:15px;background:#fee2e2;color:#991b1b;border-radius:12px;font-weight:800;">❌ ERROR: '+err.message+'</div>';
+
+ }
+}
+
+function buildCategories(){
+
+ const categories=["All",...new Set(
+   products.map(p=>p.category||"Others")
+ )];
+
+ let html="";
+
+ categories.forEach(category=>{
+  html+=`
+   <button
+    class="${selectedCategory===category?"active":""}"
+    onclick="selectCategory('${escapeHtml(category)}')">
+    ${category==="All"?"🍽️ ":""}${escapeHtml(category)}
+   </button>
+  `;
+ });
+
+ document.getElementById("categories").innerHTML=html;
+}
+
+function selectCategory(category){
+
+ selectedCategory=category;
+
+ document.getElementById("categoryTitle").textContent=
+  category==="All" ? "🍽️ All Products" : "📦 "+category;
+
+ buildCategories();
+ showProducts();
+}
+
+function showProducts(){
+
+ const list=selectedCategory==="All"
+  ? products
+  : products.filter(p=>
+      (p.category||"Others")===selectedCategory
+    );
+
+ let html="";
+
+ list.forEach(p=>{
+  html+=`
+   <div class="product" onclick="addItem(${p.id})">
+    <div class="name">${escapeHtml(p.name)}</div>
+    <div class="price">Rs. ${Number(p.price)}</div>
+    <div class="stock">Stock: ${Number(p.stock)}</div>
+   </div>
+  `;
+ });
+
+ document.getElementById("products").innerHTML=
+  html || "No products in this category";
+}
+
+function addItem(id){
+
+ const p=products.find(x=>x.id===id);
+
+ if(!p) return;
+
+ const existing=cart.find(x=>x.product_id===id);
+
+ if(existing){
+
+  if(existing.qty+1>p.stock){
+   alert("❌ Stock available nahi hai");
+   return;
+  }
+
+  existing.qty++;
+ }else{
+
+  if(Number(p.stock)<1){
+   alert("❌ Product out of stock");
+   return;
+  }
+
+  cart.push({
+   product_id:p.id,
+   name:p.name,
+   price:Number(p.price),
+   qty:1
+  });
+ }
+
+ renderCart();
+}
+
+function changeQty(index,change){
+
+ const item=cart[index];
+ const p=products.find(x=>x.id===item.product_id);
+
+ item.qty+=change;
+
+ if(item.qty<1){
+  cart.splice(index,1);
+ }
+
+ if(p && item.qty>p.stock){
+  item.qty=p.stock;
+ }
+
+ renderCart();
+}
+
+function removeItem(index){
+
+ cart.splice(index,1);
+ renderCart();
+}
+
+function renderCart(){
+
+ let total=0;
+ let html="";
+
+ cart.forEach((item,index)=>{
+
+  const amount=item.price*item.qty;
+  total+=amount;
+
+  html+=`
+   <div class="cart-item">
+
+    <b>${escapeHtml(item.name)}</b><br>
+
+    Rs. ${item.price} × ${item.qty}
+    = <b>Rs. ${amount}</b>
+
+    <div class="qty">
+     <button onclick="changeQty(${index},-1)">−</button>
+     ${item.qty}
+     <button onclick="changeQty(${index},1)">+</button>
+
+     <button onclick="removeItem(${index})">
+      ❌
+     </button>
+    </div>
+
+   </div>
+  `;
+ });
+
+ document.getElementById("cart").innerHTML=
+  html || "Cart empty";
+
+ document.getElementById("total").textContent=total;
+}
+
+
+function toggleOrderFields(){
+
+ const type=document.getElementById("orderType").value;
+
+ const table=document.getElementById("tableNo");
+ const rider=document.getElementById("riderName");
+ const riderPhone=document.getElementById("riderPhone");
+ const address=document.getElementById("deliveryAddress");
+
+ table.style.display=type==="Dine-In" ? "block" : "none";
+
+ const delivery=type==="Home Delivery";
+
+ rider.style.display=delivery ? "block" : "none";
+ riderPhone.style.display=delivery ? "block" : "none";
+ address.style.display=delivery ? "block" : "none";
+}
+
+async function placeOrder(){
+
+ try{
+  const dayCheck=await fetch("/api/business-day?restaurant_id=1");
+  const day=await dayCheck.json();
+
+  if(!day || day.status!=="OPEN"){
+   alert("🔴 Day Start نہیں ہوا۔ پہلے Manager Panel سے Day Start کریں۔");
+   await loadCashierBusinessDay();
+   return;
+  }
+ }catch(e){
+  alert("⚠️ Business Day status check failed.");
+  return;
+ }
+
+ if(cart.length===0){
+  alert("❌ Pehle products add karo");
+  return;
+ }
+
+ const total=cart.reduce(
+  (sum,item)=>sum+(item.price*item.qty),0
+ );
+
+ const now=Date.now();
+
+ const order={
+  id:now,
+
+  invoiceNo:"INV-"+now,
+  orderNo:"",
+
+  customerName:document.getElementById("customerName")?.value.trim() || "",
+  customerPhone:document.getElementById("customerPhone")?.value.trim() || "",
+
+  orderType:document.getElementById("orderType")?.value || "Dine-In",
+  tableNo:document.getElementById("tableNo")?.value.trim() || "",
+
+  orderTakerName:document.getElementById("orderTakerName")?.value.trim() || "",
+  orderTakerPhone:document.getElementById("orderTakerPhone")?.value.trim() || "",
+
+  riderName:document.getElementById("riderName")?.value.trim() || "",
+  riderPhone:document.getElementById("riderPhone")?.value.trim() || "",
+
+  deliveryAddress:document.getElementById("deliveryAddress")?.value.trim() || "",
+  notes:document.getElementById("orderNotes")?.value.trim() || "",
+
+  items:JSON.parse(JSON.stringify(cart)),
+  total:total,
+  time:new Date().toLocaleTimeString()
+ };
+
+ try{
+
+  const r=await fetch("/api/running-orders",{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json",
+    ...cashierAuthHeaders()
+   },
+   body:JSON.stringify({
+    restaurant_id:1,
+    invoice_no:order.invoiceNo,
+    order_no:order.orderNo,
+
+    customer_name:order.customerName,
+    customer_phone:order.customerPhone,
+
+    order_type:order.orderType,
+    table_no:order.tableNo,
+
+    order_taker_name:order.orderTakerName,
+    order_taker_phone:order.orderTakerPhone,
+
+    rider_name:order.riderName,
+    rider_phone:order.riderPhone,
+
+    delivery_address:order.deliveryAddress,
+    notes:order.notes,
+
+    items:order.items,
+    total:order.total
+   })
+  });
+
+  const data=await r.json();
+
+  if(!r.ok || !data.success){
+   alert("❌ Order save nahi hua\n"+(data.error||"Unknown error"));
+   return;
+  }
+
+  order.id=Number(data.order_id);
+  order.invoiceNo=data.invoice_no || order.invoiceNo;
+  order.orderNo=data.order_no || order.orderNo;
+
+  pendingOrders.unshift(order);
+
+  cart=[];
+
+  renderCart();
+  renderPendingOrders();
+
+  document.getElementById("customerName").value="";
+  document.getElementById("customerPhone").value="";
+  document.getElementById("tableNo").value="";
+  document.getElementById("orderTakerName").value="";
+  document.getElementById("orderTakerPhone").value="";
+  document.getElementById("riderName").value="";
+  document.getElementById("riderPhone").value="";
+  document.getElementById("deliveryAddress").value="";
+  document.getElementById("orderNotes").value="";
+
+  alert(
+   "✅ Order Running mein save ho gaya\n\n"+
+   "Invoice: "+order.invoiceNo+"\n"+
+   "Order: "+order.orderNo
+  );
+
+ }catch(error){
+
+  alert("❌ Server connection error\n"+error.message);
+
+ }
+}
+
+
+async function loadRunningOrders(){
+
+ try{
+
+  const r=await fetch("/api/running-orders?restaurant_id=1",{headers:cashierAuthHeaders()});
+
+  const data=await r.json();
+
+  if(!r.ok || !Array.isArray(data)){
+   console.error("Running orders load failed",data);
+   return;
+  }
+
+  pendingOrders=data.map(order=>({
+   id:order.id,
+   invoiceNo:order.invoice_no,
+   orderNo:order.order_no,
+   customerName:order.customer_name || "",
+   customerPhone:order.customer_phone || "",
+   orderType:order.order_type || "",
+   tableNo:order.table_no || "",
+   orderTakerName:order.order_taker_name || "",
+   orderTakerPhone:order.order_taker_phone || "",
+   riderName:order.rider_name || "",
+   riderPhone:order.rider_phone || "",
+   deliveryAddress:order.delivery_address || "",
+   notes:order.notes || "",
+   items:Array.isArray(order.items) ? order.items : [],
+   total:Number(order.total)||0,
+   time:order.created_at || ""
+  }));
+
+  renderPendingOrders();
+
+ }catch(error){
+
+  console.error("Running orders error:",error);
+
+ }
+
+}
+
+function renderPendingOrders(){
+
+ let html="";
+
+ pendingOrders.forEach(order=>{
+
+  let items=order.items.map(item=>
+   `${escapeHtml(item.name)} × ${item.qty}`
+  ).join("<br>");
+
+  html+=`
+   <div class="pending">
+
+    <b>🧾 Order #${String(order.id).slice(-4)}</b>
+
+    <div style="font-size:12px;margin:5px 0">
+     ${order.time}
+    </div>
+
+    ${items}
+
+    <hr>
+
+    <b>Total: Rs. ${order.total}</b>
+
+    <button class="smallbtn"
+     onclick="printBill(${order.id})">
+     🖨️ Print Bill
+    </button>
+
+    <button class="smallbtn"
+     style="background:#16a34a;color:white"
+     onclick="cashOut(${order.id})">
+     💵 Cash Out
+    </button>
+
+   </div>
+  `;
+ });
+
+ document.getElementById("pendingOrders").innerHTML=
+  html || "No running orders";
+}
+
+function printBill(id){
+
+ const order=pendingOrders.find(x=>x.id===id);
+
+ if(!order) return;
+
+ const isThermal=true;
+
+ let rows="";
+
+ order.items.forEach(item=>{
+  rows+=`
+   <tr>
+    <td>${escapeHtml(item.name)}</td>
+    <td>${item.qty}</td>
+    <td>Rs. ${item.price}</td>
+    <td>Rs. ${item.price*item.qty}</td>
+   </tr>
+  `;
+ });
+
+ const w=window.open("","_blank");
+
+ if(!w){
+  alert("❌ Popup blocked hai");
+  return;
+ }
+
+ w.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+
+@page{
+ ${isThermal
+  ? "size:80mm auto; margin:0;"
+  : "size:A4 portrait; margin:10mm;"}
+}
+
+*{
+ box-sizing:border-box;
+}
+
+body{
+ margin:0;
+ padding:${isThermal ? "5mm" : "5mm 8mm"};
+ width:${isThermal ? "80mm" : "100%"};
+ font-family:Arial,sans-serif;
+ color:#000;
+ font-size:${isThermal ? "11px" : "14px"};
+}
+
+.invoice{
+ ${isThermal
+  ? "width:100%;"
+  : "width:100%; min-height:277mm; margin:auto;"}
+}
+
+.header{
+ text-align:center;
+ border-bottom:2px solid #000;
+ padding-bottom:10px;
+}
+
+.restaurant{
+ font-size:${isThermal ? "20px" : "30px"};
+ font-weight:bold;
+}
+
+.meta{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:6px 20px;
+ margin:15px 0;
+ line-height:1.5;
+}
+
+.line{
+ border-top:1px dashed #000;
+ margin:10px 0;
+}
+
+table{
+ width:100%;
+ border-collapse:collapse;
+ margin-top:10px;
+}
+
+th,td{
+ padding:${isThermal ? "5px 2px" : "8px 5px"};
+ border-bottom:1px solid #ddd;
+ text-align:left;
+}
+
+th:nth-child(n+2),
+td:nth-child(n+2){
+ text-align:right;
+}
+
+.total{
+ margin-top:12px;
+ padding-top:10px;
+ border-top:2px solid #000;
+ text-align:right;
+ font-size:${isThermal ? "18px" : "24px"};
+ font-weight:bold;
+}
+
+.footer{
+ text-align:center;
+ margin-top:30px;
+ padding-top:15px;
+ border-top:1px solid #ddd;
+}
+
+.no-print{
+ margin-top:20px;
+ padding:12px 25px;
+ font-size:16px;
+}
+
+@media print{
+ .no-print{
+  display:none;
+ }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="invoice">
+
+ <div class="header">
+
+  <div class="restaurant">
+   MS RESTAURANT
+  </div>
+
+  <div>
+   Restaurant Phone: __________
+  </div>
+
+  <div>
+   Restaurant Address: __________
+  </div>
+
+ </div>
+
+ <div class="meta">
+
+  <div>
+   <b>Invoice No:</b>
+   ${escapeHtml(order.invoiceNo || "-")}
+  </div>
+
+  <div>
+   <b>Order No:</b>
+   ${escapeHtml(order.orderNo || "-")}
+  </div>
+
+  <div>
+   <b>Date:</b>
+   ${new Date().toLocaleDateString()}
+  </div>
+
+  <div>
+   <b>Time:</b>
+   ${escapeHtml(order.time || "-")}
+  </div>
+
+  <div>
+   <b>Customer:</b>
+   ${escapeHtml(order.customerName || "-")}
+  </div>
+
+  <div>
+   <b>Phone:</b>
+   ${escapeHtml(order.customerPhone || "-")}
+  </div>
+
+  <div>
+   <b>Order Type:</b>
+   ${escapeHtml(order.orderType || "-")}
+  </div>
+
+  <div>
+   <b>Table:</b>
+   ${escapeHtml(order.tableNo || "-")}
+  </div>
+
+  <div>
+   <b>Order Taker:</b>
+   ${escapeHtml(order.orderTakerName || "-")}
+  </div>
+
+  <div>
+   <b>Rider:</b>
+   ${escapeHtml(order.riderName || "-")}
+  </div>
+
+ </div>
+
+ ${order.deliveryAddress ? `
+ <div class="line"></div>
+ <div>
+  <b>Delivery Address:</b>
+  ${escapeHtml(order.deliveryAddress)}
+ </div>
+ ` : ""}
+
+ <div class="line"></div>
+
+ <table>
+
+  <thead>
+   <tr>
+    <th>Product</th>
+    <th>Qty</th>
+    <th>Rate</th>
+    <th>Total</th>
+   </tr>
+  </thead>
+
+  <tbody>
+   ${rows}
+  </tbody>
+
+ </table>
+
+ <div class="total">
+  TOTAL: Rs. ${order.total}
+ </div>
+
+ ${order.notes ? `
+ <div class="line"></div>
+ <div>
+  <b>Notes:</b><br>
+  ${escapeHtml(order.notes)}
+ </div>
+ ` : ""}
+
+ <div class="footer">
+  <b>Thank You ❤️</b>
+  <br>
+  Visit Again!
+ </div>
+
+ <button class="no-print" onclick="window.print()">
+  🖨️ PRINT
+ </button>
+
+</div>
+
+</body>
+</html>
+ `);
+
+ w.document.close();
+
+ setTimeout(()=>{
+  w.focus();
+  w.print();
+ },500);
+}
+
+
+function showCashOutModal(order){
+
+ const old=document.getElementById("cashOutModal");
+ if(old) old.remove();
+
+ const modal=document.createElement("div");
+ modal.id="cashOutModal";
+
+ modal.innerHTML=`
+ <div style="
+   position:fixed;
+   inset:0;
+   background:rgba(0,0,0,.65);
+   display:flex;
+   align-items:center;
+   justify-content:center;
+   z-index:99999;
+   padding:20px;
+ ">
+   <div style="
+     width:100%;
+     max-width:430px;
+     background:white;
+     border-radius:22px;
+     padding:25px;
+     box-shadow:0 20px 60px rgba(0,0,0,.35);
+     text-align:center;
+   ">
+
+    <div style="font-size:42px">💰</div>
+
+    <h2 style="margin:5px 0 2px">
+      CASH OUT
+    </h2>
+
+    <div style="
+      font-size:34px;
+      font-weight:800;
+      margin:10px 0;
+    ">
+      Rs. ${Number(order.total).toLocaleString()}
+    </div>
+
+    <div style="
+      background:#f3f4f6;
+      border-radius:12px;
+      padding:12px;
+      margin-bottom:18px;
+      text-align:left;
+      line-height:1.7;
+    ">
+      <b>Invoice:</b> ${escapeHtml(order.invoiceNo||"-")}<br>
+      <b>Order:</b> ${escapeHtml(order.orderNo||"-")}
+    </div>
+
+    <div style="
+      font-weight:700;
+      margin-bottom:10px;
+    ">
+      Select Payment Method
+    </div>
+
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    ">
+
+      <button onclick="openCashPayment(${order.id})"
+       style="
+        padding:16px 5px;
+        border:0;
+        border-radius:14px;
+        font-size:15px;
+        font-weight:700;
+        cursor:pointer;
+       ">
+       💵<br>Cash
+      </button>
+
+      <button onclick="openOnlinePayment(${order.id})"
+       style="
+        padding:16px 5px;
+        border:0;
+        border-radius:14px;
+        font-size:15px;
+        font-weight:700;
+        cursor:pointer;
+       ">
+       📱<br>Online
+      </button>
+
+      <button onclick="confirmCashOut(${order.id},'Card')"
+       style="
+        padding:16px 5px;
+        border:0;
+        border-radius:14px;
+        font-size:15px;
+        font-weight:700;
+        cursor:pointer;
+       ">
+       💳<br>Card
+      </button>
+
+    </div>
+
+    <button onclick="document.getElementById('cashOutModal').remove()"
+     style="
+      width:100%;
+      margin-top:16px;
+      padding:12px;
+      border:0;
+      border-radius:12px;
+      background:#eee;
+      font-weight:700;
+      cursor:pointer;
+     ">
+     Cancel
+    </button>
+
+   </div>
+ </div>
+ `;
+
+ document.body.appendChild(modal);
+}
+
+
+function openCashPayment(id){
+
+ const order=pendingOrders.find(x=>x.id===id);
+
+ if(!order) return;
+
+ const old=document.getElementById("cashPaymentModal");
+ if(old) old.remove();
+
+ const modal=document.createElement("div");
+ modal.id="cashPaymentModal";
+
+ modal.innerHTML=`
+ <div style="
+   position:fixed;
+   inset:0;
+   background:rgba(0,0,0,.65);
+   display:flex;
+   align-items:center;
+   justify-content:center;
+   z-index:99999;
+   padding:20px;
+ ">
+  <div style="
+    width:100%;
+    max-width:430px;
+    background:white;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+  ">
+
+   <div style="text-align:center">
+    <div style="font-size:45px">💵</div>
+
+    <h2 style="margin:5px 0">CASH PAYMENT</h2>
+
+    <div style="
+      font-size:30px;
+      font-weight:900;
+      margin:12px 0;
+    ">
+      Rs. ${Number(order.total).toLocaleString()}
+    </div>
+   </div>
+
+   <label style="font-weight:700">
+    Customer Paid
+   </label>
+
+   <input id="cashReceived"
+   value="${Number(order.total).toFixed(0)}"
+    type="number"
+    min="0"
+    placeholder="Enter amount"
+    oninput="calculateChange(${order.total})"
+    style="
+      width:100%;
+      box-sizing:border-box;
+      padding:14px;
+      margin:8px 0 15px;
+      border:2px solid #ddd;
+      border-radius:12px;
+      font-size:20px;
+      font-weight:700;
+    ">
+
+   <div style="
+     background:#f3f4f6;
+     border-radius:14px;
+     padding:15px;
+     margin-bottom:18px;
+     text-align:center;
+   ">
+    <div style="font-size:14px">CHANGE</div>
+
+    <div id="cashChange"
+     style="
+       font-size:32px;
+       font-weight:900;
+       margin-top:4px;
+     ">
+     Rs. 0
+    </div>
+   </div>
+
+   <button onclick="submitCashPayment(${order.id})"
+    style="
+     width:100%;
+     padding:15px;
+     border:0;
+     border-radius:14px;
+     font-size:17px;
+     font-weight:800;
+     cursor:pointer;
+     margin-bottom:10px;
+    ">
+    ✅ CONFIRM CASH
+   </button>
+
+   <button onclick="document.getElementById('cashPaymentModal').remove()"
+    style="
+     width:100%;
+     padding:12px;
+     border:0;
+     border-radius:12px;
+     background:#eee;
+     font-weight:700;
+     cursor:pointer;
+    ">
+    Cancel
+   </button>
+
+  </div>
+ </div>
+ `;
+
+ document.body.appendChild(modal);
+}
+
+
+function calculateChange(total){
+
+ const input=document.getElementById("cashReceived");
+ const output=document.getElementById("cashChange");
+
+ if(!input || !output) return;
+
+ const received=Number(input.value)||0;
+ const change=received-Number(total);
+
+ output.textContent=
+  "Rs. "+Math.max(change,0).toLocaleString();
+
+ if(received>0 && received<Number(total)){
+  output.textContent="Rs. 0 — Amount kam hai";
+ }
+}
+
+
+async function submitCashPayment(id){
+
+ if(window.cashOutProcessing){
+  return;
+ }
+
+ const order=pendingOrders.find(x=>x.id===id);
+
+ if(!order) return;
+
+ window.cashOutProcessing=true;
+
+ const input=document.getElementById("cashReceived");
+ const received=Number(input?.value)||0;
+
+ if(received<Number(order.total)){
+  window.cashOutProcessing=false;
+  alert(
+   "❌ Customer se kam amount receive hua hai.\n"+
+   "Required: Rs. "+order.total
+  );
+  return;
+ }
+
+ const modal=document.getElementById("cashPaymentModal");
+ if(modal) modal.remove();
+
+ await completeCashOut(
+  id,
+  "Cash",
+  received-Number(order.total)
+ );
+}
+
+
+async function completeCashOut(id,paymentMethod,changeAmount=0,paymentReference=""){
+
+ const order=pendingOrders.find(x=>x.id===id);
+
+ if(!order) return;
+
+ try{
+
+  const r=await fetch("/api/sales",{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json",
+    ...cashierAuthHeaders()
+   },
+   body:JSON.stringify({
+    restaurant_id:1,
+    items:order.items,
+    total:order.total,
+    payment_method:paymentMethod,
+    payment_reference:paymentReference
+   })
+  });
+
+  const data=await r.json();
+
+  if(!data.success){
+   window.cashOutProcessing=false;
+   alert(
+    "❌ Cash Out failed\n"+
+    (data.error||"Unknown error")
+   );
+   return;
+  }
+
+  const remove=await fetch(
+   "/api/running-orders/"+order.id,
+   {
+     method:"DELETE",
+     headers:cashierAuthHeaders()
+    }
+  );
+
+  if(!remove.ok){
+   alert("⚠️ Sale save ho gayi, lekin Running Order remove nahi hua.");
+  }
+
+  pendingOrders=pendingOrders.filter(
+   x=>x.id!==id
+  );
+
+  renderPendingOrders();
+
+  await loadProducts();
+
+  showCashOutSuccess(
+   order,
+   paymentMethod,
+   changeAmount
+  );
+
+  window.cashOutProcessing=false;
+
+ }catch(error){
+
+  alert(
+   "❌ Server connection error\n"+
+   error.message
+  );
+
+ }
+}
+
+
+
+function openOnlinePayment(id){
+
+ const order=pendingOrders.find(x=>x.id===id);
+ if(!order) return;
+
+ const old=document.getElementById("onlinePaymentModal");
+ if(old) old.remove();
+
+ const modal=document.createElement("div");
+ modal.id="onlinePaymentModal";
+
+ modal.innerHTML=`
+ <div style="
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+  padding:20px;
+ ">
+  <div style="
+   background:white;
+   width:100%;
+   max-width:420px;
+   border-radius:20px;
+   padding:24px;
+   box-shadow:0 20px 60px rgba(0,0,0,.3);
+  ">
+
+   <div style="font-size:22px;font-weight:800;margin-bottom:8px">
+    📱 Online Payment
+   </div>
+
+   <div style="font-size:18px;font-weight:700;margin-bottom:18px">
+    Total: Rs. ${order.total}
+   </div>
+
+   <label style="font-weight:700">Payment Reference / Transaction ID</label>
+
+   <input id="onlineReferenceInput"
+    type="text"
+    placeholder="Example: TXN123456"
+    style="
+     width:100%;
+     box-sizing:border-box;
+     padding:14px;
+     margin-top:8px;
+     border:2px solid #ddd;
+     border-radius:12px;
+     font-size:16px;
+    ">
+
+   <button onclick="submitOnlinePayment(${order.id})"
+    style="
+     width:100%;
+     margin-top:18px;
+     padding:14px;
+     border:0;
+     border-radius:12px;
+     background:#111;
+     color:white;
+     font-size:16px;
+     font-weight:800;
+     cursor:pointer;
+    ">
+    ✅ Confirm Online Payment
+   </button>
+
+   <button onclick="document.getElementById('onlinePaymentModal').remove()"
+    style="
+     width:100%;
+     margin-top:10px;
+     padding:12px;
+     border:0;
+     border-radius:12px;
+     background:#eee;
+     font-weight:700;
+     cursor:pointer;
+    ">
+    Cancel
+   </button>
+
+  </div>
+ </div>
+ `;
+
+ document.body.appendChild(modal);
+}
+
+
+async function submitOnlinePayment(id){
+
+ const order=pendingOrders.find(x=>x.id===id);
+ if(!order) return;
+
+ const input=document.getElementById("onlineReferenceInput");
+ const reference=(input?.value||"").trim();
+
+ if(!reference){
+  alert("❌ Payment Reference / Transaction ID enter karo");
+  return;
+ }
+
+ const modal=document.getElementById("onlinePaymentModal");
+ if(modal) modal.remove();
+
+ await completeCashOut(
+  id,
+  "Online",
+  0,
+  reference
+ );
+}
+
+
+async function confirmCashOut(id,paymentMethod){
+
+ const order=pendingOrders.find(x=>x.id===id);
+
+ if(!order) return;
+
+ const modal=document.getElementById("cashOutModal");
+ if(modal) modal.remove();
+
+ try{
+
+  const r=await fetch("/api/sales",{
+   method:"POST",
+   headers:{
+    "Content-Type":"application/json",
+    ...cashierAuthHeaders()
+   },
+   body:JSON.stringify({
+    restaurant_id:1,
+    items:order.items,
+    total:order.total,
+    payment_method:paymentMethod
+   })
+  });
+
+  const data=await r.json();
+
+  if(!data.success){
+
+   alert(
+    "❌ Cash Out failed\n"+
+    (data.error||"Unknown error")
+   );
+
+   return;
+  }
+
+  const remove=await fetch(
+   "/api/running-orders/"+order.id,
+   {
+     method:"DELETE",
+     headers:cashierAuthHeaders()
+   }
+  );
+
+  if(!remove.ok){
+   console.warn("Running order remove failed");
+  }
+
+  pendingOrders=pendingOrders.filter(
+   x=>x.id!==id
+  );
+
+  renderPendingOrders();
+
+  await loadProducts();
+
+  showCashOutSuccess(order,paymentMethod,0);
+
+ }catch(error){
+
+  alert(
+   "❌ Server connection error\n"+
+   error.message
+  );
+
+ }
+}
+
+
+function showCashOutSuccess(order,paymentMethod,changeAmount=0){
+
+ const modal=document.createElement("div");
+ modal.id="cashOutSuccessModal";
+
+ modal.style.cssText=`
+   position:fixed;
+   inset:0;
+   z-index:999999;
+   background:rgba(0,0,0,.65);
+   display:flex;
+   align-items:center;
+   justify-content:center;
+   padding:20px;
+ `;
+
+ modal.innerHTML=`
+  <div style="
+    width:100%;
+    max-width:430px;
+    background:white;
+    border-radius:24px;
+    padding:30px;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+  ">
+   <div style="font-size:65px">✅</div>
+
+   <h2 style="margin:8px 0;font-size:25px">
+    CASH OUT COMPLETE
+   </h2>
+
+   <div style="
+    font-size:36px;
+    font-weight:900;
+    margin:12px 0;
+   ">
+    Rs. ${Number(order.total).toLocaleString()}
+   </div>
+
+   <div style="
+    background:#f3f4f6;
+    border-radius:14px;
+    padding:15px;
+    text-align:left;
+    line-height:1.8;
+    margin:15px 0;
+   ">
+    <b>Payment:</b> ${escapeHtml(paymentMethod)}<br>
+    ${paymentMethod==="Cash"
+      ? "<b>Change:</b> Rs. "+Number(changeAmount).toLocaleString()+"<br>"
+      : ""}
+    <b>Invoice:</b> ${escapeHtml(order.invoiceNo||"-")}<br>
+    <b>Order:</b> ${escapeHtml(order.orderNo||"-")}
+   </div>
+
+   <div style="
+    text-align:left;
+    line-height:1.8;
+    margin-bottom:18px;
+   ">
+    ✅ Payment Received<br>
+    ✅ Sale Saved<br>
+    ✅ Order Completed
+   </div>
+
+   <button id="cashOutDoneBtn"
+    style="
+     width:100%;
+     padding:14px;
+     border:0;
+     border-radius:14px;
+     background:#111827;
+     color:white;
+     font-size:17px;
+     font-weight:800;
+     cursor:pointer;
+    ">
+    DONE
+   </button>
+  </div>
+ `;
+
+ document.body.appendChild(modal);
+
+ document.getElementById("cashOutDoneBtn").onclick=()=>{
+  modal.remove();
+
+  if(typeof loadRunningOrders==="function"){
+   loadRunningOrders();
+  }
+ };
+}
+function cashOut(id){
+ showCashOutModal(
+  pendingOrders.find(x=>x.id===id)
+ );
+}
+
+
+function escapeHtml(value){
+
+ return String(value)
+  .replace(/&/g,"&amp;")
+  .replace(/</g,"&lt;")
+  .replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;")
+  .replace(/'/g,"&#039;");
+}
+
+loadProducts();
+loadRunningOrders();
+
+</script>
+
+</body>
+</html>
+
+<style>
+/* ===== PREMIUM CASHIER CATEGORIES ===== */
+
+#categories{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  gap:12px;
+}
+
+#categories button{
+  min-height:72px;
+  border:1px solid rgba(0,0,0,.08);
+  border-radius:18px;
+  background:linear-gradient(145deg,#ffffff,#f1f3f6);
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  font-size:15px;
+  font-weight:800;
+  cursor:pointer;
+  padding:12px;
+  transition:.2s ease;
+}
+
+#categories button:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 25px rgba(0,0,0,.14);
+}
+
+#categories button.active{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(0,0,0,.18);
+  border:2px solid currentColor;
+}
+
+@media(max-width:600px){
+  #categories{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  #categories button{
+    min-height:65px;
+    font-size:14px;
+  }
+}
+</style>
+
+
+<style>
+/* ===== CASHIER FINAL LAYOUT ===== */
+
+.pos{
+  grid-template-columns:minmax(0,1fr) 360px;
+}
+
+/* Categories compact full-width strip */
+#categories{
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
+  max-height:190px;
+  overflow-y:auto;
+}
+
+/* Products + Current Order stay in main working area */
+.pos > .right{
+  grid-column:1/-1;
+  width:100%;
+}
+
+/* Running Orders full width */
+.pos > .right .pending{
+  display:inline-block;
+  vertical-align:top;
+  width:calc(33.333% - 10px);
+  margin-right:10px;
+}
+
+@media(max-width:900px){
+  .pos{
+    grid-template-columns:1fr;
+  }
+
+  .pos > .right{
+    grid-column:1;
+  }
+
+  .pos > .right .pending{
+    width:calc(50% - 8px);
+  }
+}
+
+@media(max-width:600px){
+  #categories{
+    max-height:none;
+  }
+
+  .pos > .right .pending{
+    width:100%;
+    margin-right:0;
+  }
+}
+</style>
+
+<style>
+/* ===== RUNNING ORDERS - LEFT COMPACT PANEL ===== */
+
+.pos{
+  grid-template-columns:280px minmax(0,1fr);
+  align-items:start;
+}
+
+/* Running Orders panel ko left column */
+.pos > .right{
+  grid-column:1;
+  grid-row:1;
+  width:100%;
+}
+
+/* Running orders ka andar scrolling area */
+#pendingOrders{
+  max-height:calc(100vh - 210px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:5px;
+}
+
+/* Har order compact horizontal-style card */
+#pendingOrders .pending{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 8px;
+  padding:9px 10px;
+  border-radius:10px;
+  font-size:12px;
+  line-height:1.35;
+}
+
+/* Order number prominent but thin */
+#pendingOrders .pending b:first-child{
+  display:block;
+  font-size:14px;
+  margin-bottom:3px;
+}
+
+/* Buttons compact */
+#pendingOrders .smallbtn{
+  padding:6px 8px;
+  margin-top:6px;
+  font-size:11px;
+  border-radius:7px;
+}
+
+/* Mobile */
+@media(max-width:900px){
+  .pos{
+    grid-template-columns:1fr;
+  }
+
+  .pos > .right{
+    grid-column:1;
+    grid-row:auto;
+  }
+
+  #pendingOrders{
+    max-height:320px;
+  }
+}
+</style>
+
+<style>
+/* ===== POS SCREEN - PROFESSIONAL 3 COLUMN ===== */
+
+.pos{
+  display:grid !important;
+  grid-template-columns:370px minmax(0,1fr) 360px !important;
+  gap:12px !important;
+  align-items:start !important;
+}
+
+/* Running Orders = LEFT */
+.pos > .right{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+/* Center working area */
+.pos > .right ~ *{
+  box-sizing:border-box;
+}
+
+/* Running Orders panel */
+.pos > .right{
+  position:relative;
+  overflow:hidden;
+}
+
+.pos > .right h3{
+  margin:0 !important;
+  padding-bottom:12px !important;
+  border-bottom:1px solid #e5e7eb;
+}
+
+/* Scroll ONLY orders */
+#pendingOrders{
+  height:calc(100vh - 245px) !important;
+  min-height:420px !important;
+  max-height:calc(100vh - 245px) !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding:6px 5px 6px 0 !important;
+}
+
+/* Compact order rows */
+#pendingOrders .pending{
+  width:100% !important;
+  box-sizing:border-box !important;
+  margin:0 0 6px !important;
+  padding:8px 10px !important;
+  border:1px solid #e2e8f0 !important;
+  border-radius:8px !important;
+  background:#f8fafc !important;
+  font-size:12px !important;
+  line-height:1.35 !important;
+}
+
+/* Order number */
+#pendingOrders .pending b:first-child{
+  display:block !important;
+  font-size:14px !important;
+  margin-bottom:2px !important;
+}
+
+/* Order buttons */
+#pendingOrders .smallbtn{
+  padding:5px 7px !important;
+  margin-top:5px !important;
+  font-size:10px !important;
+  border-radius:6px !important;
+}
+
+/* Center + right sections stay usable */
+.pos > div:not(.right){
+  min-width:0;
+}
+
+/* Nice scrollbar */
+#pendingOrders::-webkit-scrollbar{
+  width:7px;
+}
+
+#pendingOrders::-webkit-scrollbar-thumb{
+  background:#94a3b8;
+  border-radius:10px;
+}
+
+/* Tablet */
+@media(max-width:1100px){
+  .pos{
+    grid-template-columns:300px minmax(0,1fr) !important;
+  }
+
+  .pos > .right{
+    grid-column:1 !important;
+    grid-row:1 !important;
+  }
+}
+
+/* Mobile */
+@media(max-width:700px){
+  .pos{
+    grid-template-columns:1fr !important;
+  }
+
+  .pos > .right{
+    grid-column:1 !important;
+    grid-row:auto !important;
+  }
+
+  #pendingOrders{
+    height:300px !important;
+    min-height:0 !important;
+    max-height:300px !important;
+  }
+}
+</style>
+
+<style>
+/* ===== PROFESSIONAL POS 3-COLUMN LAYOUT ===== */
+
+.pos{
+  display:grid !important;
+  grid-template-columns:300px minmax(0,1fr) 360px !important;
+  gap:12px !important;
+  align-items:start !important;
+}
+
+/* RUNNING ORDERS - LEFT */
+.pos > .right{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+}
+
+/* RUNNING ORDERS SCROLL */
+#pendingOrders{
+  height:calc(100vh - 245px) !important;
+  min-height:400px !important;
+  max-height:calc(100vh - 245px) !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding:5px !important;
+}
+
+/* COMPACT ORDER ROW */
+#pendingOrders .pending{
+  width:100% !important;
+  box-sizing:border-box !important;
+  margin:0 0 6px !important;
+  padding:8px 9px !important;
+  border:1px solid #dbe3ec !important;
+  border-radius:8px !important;
+  background:#f8fafc !important;
+  font-size:12px !important;
+  line-height:1.3 !important;
+}
+
+/* ORDER NUMBER */
+#pendingOrders .pending b:first-child{
+  display:block !important;
+  font-size:14px !important;
+  margin-bottom:2px !important;
+}
+
+/* BUTTONS */
+#pendingOrders .smallbtn{
+  padding:5px 7px !important;
+  margin-top:5px !important;
+  font-size:10px !important;
+  border-radius:6px !important;
+}
+
+/* SCROLLBAR */
+#pendingOrders::-webkit-scrollbar{
+  width:6px;
+}
+
+#pendingOrders::-webkit-scrollbar-thumb{
+  background:#94a3b8;
+  border-radius:10px;
+}
+
+/* DESKTOP */
+@media(min-width:1101px){
+  .pos{
+    grid-template-columns:300px minmax(0,1fr) 360px !important;
+  }
+}
+
+/* TABLET */
+@media(max-width:1100px) and (min-width:701px){
+  .pos{
+    grid-template-columns:280px minmax(0,1fr) !important;
+  }
+
+  #pendingOrders{
+    max-height:450px !important;
+    height:450px !important;
+  }
+}
+
+/* MOBILE */
+@media(max-width:700px){
+  .pos{
+    grid-template-columns:1fr !important;
+  }
+
+  .pos > .right{
+    grid-column:1 !important;
+    grid-row:auto !important;
+  }
+
+  #pendingOrders{
+    height:300px !important;
+    min-height:0 !important;
+    max-height:300px !important;
+  }
+}
+</style>
+
+<style>
+/* ===== FINAL POS 3 COLUMN ===== */
+
+.posWorkspace{
+  display:grid;
+  grid-template-columns:300px minmax(0,1fr) 360px;
+  gap:12px;
+  align-items:start;
+}
+
+/* LEFT RUNNING ORDERS */
+.runningPanel{
+  min-width:0;
+  position:sticky;
+  top:12px;
+}
+
+#pendingOrders{
+  height:calc(100vh - 250px);
+  min-height:400px;
+  max-height:calc(100vh - 250px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:5px;
+}
+
+#pendingOrders .pending{
+  width:100%;
+  box-sizing:border-box;
+  margin:0 0 6px;
+  padding:8px 9px;
+  border-radius:9px;
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  font-size:12px;
+  line-height:1.35;
+}
+
+#pendingOrders .pending b:first-child{
+  display:block;
+  font-size:14px;
+  margin-bottom:2px;
+}
+
+/* CENTER */
+.centerWorkspace{
+  min-width:0;
+}
+
+/* RIGHT CURRENT ORDER */
+.currentOrderPanel{
+  min-width:0;
+  position:sticky;
+  top:12px;
+}
+
+/* SCROLLBAR */
+#pendingOrders::-webkit-scrollbar{
+  width:6px;
+}
+
+#pendingOrders::-webkit-scrollbar-thumb{
+  background:#94a3b8;
+  border-radius:10px;
+}
+
+/* TABLET */
+@media(max-width:1100px){
+  .posWorkspace{
+    grid-template-columns:260px minmax(0,1fr);
+  }
+
+  .currentOrderPanel{
+    grid-column:1/-1;
+    position:static;
+  }
+
+  #pendingOrders{
+    height:400px;
+    max-height:400px;
+  }
+}
+
+/* MOBILE */
+@media(max-width:700px){
+  .posWorkspace{
+    grid-template-columns:1fr;
+  }
+
+  .runningPanel,
+  .currentOrderPanel{
+    position:static;
+  }
+
+  #pendingOrders{
+    height:300px;
+    min-height:0;
+    max-height:300px;
+  }
+}
+</style>
+
+<style>
+/* ===== FINAL POS 3-COLUMN FIX ===== */
+
+.pos{
+  display:block !important;
+  width:100% !important;
+}
+
+.posWorkspace{
+  display:grid !important;
+  grid-template-columns:280px minmax(0,1fr) 330px !important;
+  gap:12px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  align-items:start !important;
+  grid-column:auto !important;
+}
+
+/* LEFT — RUNNING ORDERS */
+.runningPanel{
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  position:sticky !important;
+  top:12px !important;
+}
+
+#pendingOrders{
+  height:calc(100vh - 300px) !important;
+  min-height:350px !important;
+  max-height:520px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+/* CENTER */
+.centerWorkspace{
+  min-width:0 !important;
+  width:100% !important;
+}
+
+.centerWorkspace > .panel:first-child{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+/* CATEGORIES — COMPACT */
+#categories{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:7px !important;
+  max-height:150px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  align-content:flex-start !important;
+}
+
+#categories button{
+  flex:0 0 auto !important;
+  width:auto !important;
+  min-width:85px !important;
+  max-width:140px !important;
+  padding:9px 13px !important;
+  font-size:13px !important;
+  white-space:nowrap !important;
+}
+
+/* PRODUCTS */
+#products{
+  min-width:0 !important;
+  width:100% !important;
+}
+
+/* RIGHT — CURRENT ORDER */
+.currentOrderPanel{
+  width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+  position:sticky !important;
+  top:12px !important;
+}
+
+/* CURRENT CART SCROLL */
+#cart{
+  max-height:420px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+/* TABLET */
+@media(max-width:1100px){
+  .posWorkspace{
+    grid-template-columns:250px minmax(0,1fr) !important;
+  }
+
+  .currentOrderPanel{
+    grid-column:1/-1 !important;
+    position:static !important;
+  }
+}
+
+/* MOBILE */
+@media(max-width:700px){
+  .posWorkspace{
+    grid-template-columns:1fr !important;
+  }
+
+  .runningPanel,
+  .currentOrderPanel{
+    position:static !important;
+  }
+
+  #pendingOrders{
+    height:300px !important;
+    min-height:0 !important;
+    max-height:300px !important;
+  }
+}
+</style>
+
+
+<style>
+/* ===== CURRENT ORDER FORCE RIGHT ===== */
+
+.posWorkspace{
+  display:grid !important;
+  grid-template-columns:280px minmax(0,1fr) 330px !important;
+  gap:12px !important;
+  align-items:start !important;
+}
+
+.runningPanel{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+
+.centerWorkspace{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+}
+
+.currentOrderPanel{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  width:100% !important;
+  min-width:0 !important;
+  position:sticky !important;
+  top:12px !important;
+}
+
+@media(max-width:1100px){
+  .posWorkspace{
+    grid-template-columns:250px minmax(0,1fr) !important;
+  }
+
+  .currentOrderPanel{
+    grid-column:2 !important;
+    grid-row:2 !important;
+    position:static !important;
+  }
+}
+
+@media(max-width:700px){
+  .posWorkspace{
+    grid-template-columns:1fr !important;
+  }
+
+  .runningPanel,
+  .centerWorkspace,
+  .currentOrderPanel{
+    grid-column:1 !important;
+    grid-row:auto !important;
+    position:static !important;
+  }
+}
+</style>
+
+
+<style>
+/* ===== FULL HEIGHT PROFESSIONAL POS ===== */
+
+.posWorkspace{
+  display:grid !important;
+  grid-template-columns:280px minmax(0,1fr) 330px !important;
+  gap:12px !important;
+  width:100% !important;
+  min-height:calc(100vh - 260px) !important;
+  align-items:stretch !important;
+}
+
+/* LEFT */
+.runningPanel{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  height:100% !important;
+  box-sizing:border-box !important;
+}
+
+/* CENTER */
+.centerWorkspace{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  min-width:0 !important;
+  width:100% !important;
+  height:100% !important;
+}
+
+/* CATEGORY FULL CENTER WIDTH */
+.centerWorkspace > .panel:first-child{
+  width:100% !important;
+  box-sizing:border-box !important;
+  flex-shrink:0 !important;
+}
+
+/* PRODUCTS TAKES REMAINING SPACE */
+.centerWorkspace > .panel:last-child{
+  width:100% !important;
+  box-sizing:border-box !important;
+  flex:1 !important;
+  min-height:0 !important;
+}
+
+/* RIGHT */
+.currentOrderPanel{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  height:100% !important;
+  box-sizing:border-box !important;
+  min-width:0 !important;
+}
+
+/* CATEGORY BUTTONS COMPACT */
+#categories{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:8px !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+/* SCREEN WIDTH */
+@media(min-width:1101px){
+  .posWorkspace{
+    grid-template-columns:280px minmax(500px,1fr) 330px !important;
+  }
+}
+
+/* TABLET */
+@media(max-width:1100px){
+  .posWorkspace{
+    grid-template-columns:250px minmax(0,1fr) !important;
+  }
+
+  .currentOrderPanel{
+    grid-column:2 !important;
+    grid-row:2 !important;
+    height:auto !important;
+  }
+}
+
+/* MOBILE */
+@media(max-width:700px){
+  .posWorkspace{
+    grid-template-columns:1fr !important;
+  }
+
+  .runningPanel,
+  .centerWorkspace,
+  .currentOrderPanel{
+    grid-column:1 !important;
+    grid-row:auto !important;
+    height:auto !important;
+  }
+}
+</style>
+
+
+<style>
+/* ===== DEFINITIVE POS LAYOUT ===== */
+
+.pos{
+  display:block !important;
+  width:100% !important;
+}
+
+.posWorkspace{
+  display:grid !important;
+  grid-template-columns:280px minmax(0,1fr) 330px !important;
+  gap:12px !important;
+  width:100% !important;
+  align-items:start !important;
+  box-sizing:border-box !important;
+}
+
+.runningPanel{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+}
+
+.centerWorkspace{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  width:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+}
+
+.categoriesPanel{
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+.productsPanel{
+  width:100% !important;
+  box-sizing:border-box !important;
+  min-width:0 !important;
+}
+
+.currentOrderPanel{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  position:sticky !important;
+  top:12px !important;
+}
+
+#categories{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:7px !important;
+}
+
+#categories button{
+  width:auto !important;
+  min-width:80px !important;
+  padding:8px 12px !important;
+}
+
+/* ===== SMALL SCREEN ===== */
+
+@media(max-width:1100px){
+  .posWorkspace{
+    grid-template-columns:250px minmax(0,1fr) !important;
+  }
+
+  .currentOrderPanel{
+    grid-column:2 !important;
+    grid-row:2 !important;
+    position:static !important;
+  }
+}
+
+@media(max-width:700px){
+  .posWorkspace{
+    grid-template-columns:1fr !important;
+  }
+
+  .runningPanel,
+  .centerWorkspace,
+  .currentOrderPanel{
+    grid-column:1 !important;
+    grid-row:auto !important;
+    position:static !important;
+  }
+}
+</style>
+
+
+<style>
+/* ===== FORCE ALL 3 POS PANELS IN ONE ROW ===== */
+
+.posWorkspace{
+  display:grid !important;
+  grid-template-columns:280px minmax(450px,1fr) 330px !important;
+  gap:12px !important;
+  width:100% !important;
+  min-width:1080px !important;
+  align-items:start !important;
+  box-sizing:border-box !important;
+}
+
+.runningPanel{
+  grid-column:1 !important;
+  grid-row:1 !important;
+}
+
+.centerWorkspace{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+}
+
+.currentOrderPanel{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  min-width:0 !important;
+  width:100% !important;
+  position:sticky !important;
+  top:12px !important;
+}
+
+/* موبائل پر بھی نیچے نہ جائے */
+@media(max-width:1100px){
+  .pos{
+    overflow-x:auto !important;
+  }
+
+  .posWorkspace{
+    display:grid !important;
+    grid-template-columns:250px 450px 320px !important;
+    min-width:1040px !important;
+  }
+
+  .runningPanel{
+    grid-column:1 !important;
+    grid-row:1 !important;
+  }
+
+  .centerWorkspace{
+    grid-column:2 !important;
+    grid-row:1 !important;
+  }
+
+  .currentOrderPanel{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    position:sticky !important;
+  }
+}
+</style>
+
+
+<style>
+/* ===== FULL SCREEN POS HEIGHT ===== */
+
+.posWorkspace{
+  height:calc(100vh - 245px) !important;
+  min-height:500px !important;
+  max-height:calc(100vh - 245px) !important;
+  align-items:stretch !important;
+  overflow:hidden !important;
+}
+
+/* تینوں main panels پوری available height */
+.posWorkspace > .panel,
+.centerWorkspace{
+  height:100% !important;
+  max-height:100% !important;
+  box-sizing:border-box !important;
+}
+
+/* CENTER کے اندر category + products */
+.centerWorkspace{
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+
+.categoriesPanel{
+  flex:0 0 auto !important;
+  max-height:150px !important;
+  overflow:hidden !important;
+}
+
+.productsPanel{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+
+/* Products صرف اپنی screen میں scroll ہوں */
+#products{
+  height:calc(100% - 40px) !important;
+  max-height:calc(100% - 40px) !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+/* Running Orders اپنی جگہ scroll */
+.runningPanel{
+  overflow:hidden !important;
+}
+
+#pendingOrders{
+  height:calc(100% - 45px) !important;
+  max-height:calc(100% - 45px) !important;
+  min-height:0 !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+/* Current Order اپنی screen میں scroll */
+.currentOrderPanel{
+  overflow:hidden !important;
+}
+
+#cart{
+  max-height:calc(100% - 115px) !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+}
+
+/* Clean scrollbars */
+#products::-webkit-scrollbar,
+#pendingOrders::-webkit-scrollbar,
+#cart::-webkit-scrollbar{
+  width:6px;
+}
+
+#products::-webkit-scrollbar-thumb,
+#pendingOrders::-webkit-scrollbar-thumb,
+#cart::-webkit-scrollbar-thumb{
+  background:#94a3b8;
+  border-radius:10px;
+}
+</style>
+
+
+<style>
+/* ===== COMPACT PROFESSIONAL POS CARDS ===== */
+
+/* Category buttons compact */
+.categoriesPanel button,
+.categoryBtn,
+.category-button{
+  height:auto !important;
+  min-height:38px !important;
+  padding:8px 14px !important;
+  margin:3px !important;
+  border-radius:10px !important;
+  line-height:1.2 !important;
+  white-space:nowrap !important;
+  box-sizing:border-box !important;
+}
+
+/* Product cards compact */
+#products > *,
+.productsPanel .product,
+.productsPanel .product-card,
+.productCard,
+.product-item{
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  padding:10px !important;
+  margin:5px !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:12px !important;
+  box-shadow:0 2px 6px rgba(15,23,42,.08) !important;
+  box-sizing:border-box !important;
+  background:#ffffff !important;
+}
+
+/* Product card hover */
+#products > *:hover,
+.productsPanel .product:hover,
+.productsPanel .product-card:hover,
+.productCard:hover,
+.product-item:hover{
+  border-color:#64748b !important;
+  box-shadow:0 4px 12px rgba(15,23,42,.14) !important;
+}
+
+/* Product text spacing */
+#products h3,
+#products h4,
+.productCard h3,
+.productCard h4,
+.product-item h3,
+.product-item h4{
+  margin:2px 0 5px !important;
+  line-height:1.25 !important;
+}
+
+/* Price compact */
+#products .price,
+.productCard .price,
+.product-item .price{
+  margin:2px 0 !important;
+  line-height:1.2 !important;
+}
+
+/* Category area cleaner */
+.categoriesPanel{
+  padding:6px !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:12px !important;
+  background:#f8fafc !important;
+}
+
+/* Product area clean outer layer */
+.productsPanel{
+  border:1px solid #cbd5e1 !important;
+  border-radius:12px !important;
+  padding:6px !important;
+  background:#f8fafc !important;
+  box-sizing:border-box !important;
+}
+
+</style>
+
+
+<style>
+/* ===== ULTRA COMPACT POS PRODUCTS ===== */
+
+#products{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fill,minmax(130px,1fr)) !important;
+  gap:6px !important;
+  padding:5px !important;
+  align-content:start !important;
+}
+
+/* Actual product boxes */
+#products > *,
+#products .product,
+#products .product-card,
+#products .productCard,
+#products .product-item{
+  min-height:0 !important;
+  height:auto !important;
+  max-height:125px !important;
+  padding:7px !important;
+  margin:0 !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:8px !important;
+  box-shadow:0 1px 4px rgba(15,23,42,.10) !important;
+  box-sizing:border-box !important;
+}
+
+/* Product content compact */
+#products img{
+  max-height:55px !important;
+  width:auto !important;
+  object-fit:contain !important;
+}
+
+#products h3,
+#products h4,
+#products p{
+  margin:2px 0 !important;
+  line-height:1.15 !important;
+}
+
+#products button{
+  min-height:28px !important;
+  height:28px !important;
+  padding:4px 8px !important;
+  margin:2px !important;
+  border-radius:6px !important;
+}
+
+/* Category boxes */
+.categoriesPanel button,
+.categoryBtn,
+.category-button{
+  min-height:34px !important;
+  height:34px !important;
+  padding:6px 11px !important;
+  margin:2px !important;
+  border-radius:8px !important;
+}
+
+/* Clean outer border */
+.productsPanel{
+  border:1px solid #cbd5e1 !important;
+  border-radius:10px !important;
+  padding:4px !important;
+}
+
+.categoriesPanel{
+  border:1px solid #cbd5e1 !important;
+  border-radius:10px !important;
+  padding:4px !important;
+}
+</style>
+
+
+<style>
+/* ===== PREMIUM COMPACT CURRENT ORDER ===== */
+
+.currentOrderPanel{
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:12px !important;
+  box-sizing:border-box !important;
+}
+
+/* Order header */
+.currentOrderPanel > h2,
+.currentOrderPanel > h3{
+  flex:0 0 auto !important;
+  margin:8px 10px !important;
+  padding-bottom:7px !important;
+  border-bottom:1px solid #e2e8f0 !important;
+}
+
+/* Cart scroll area */
+#cart{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow-y:auto !important;
+  padding:5px !important;
+}
+
+/* Cart items compact */
+#cart > *,
+#cart .cart-item,
+#cart .order-item{
+  min-height:0 !important;
+  height:auto !important;
+  padding:7px !important;
+  margin:4px 0 !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:8px !important;
+  box-sizing:border-box !important;
+  box-shadow:0 1px 3px rgba(15,23,42,.08) !important;
+}
+
+/* Cart text */
+#cart h4,
+#cart h5,
+#cart p{
+  margin:2px 0 !important;
+  line-height:1.2 !important;
+}
+
+/* Quantity / action buttons */
+#cart button{
+  min-width:28px !important;
+  min-height:28px !important;
+  height:28px !important;
+  padding:4px 8px !important;
+  margin:1px !important;
+  border-radius:6px !important;
+}
+
+/* Bottom order controls stay visible */
+.currentOrderPanel > :not(#cart){
+  flex-shrink:0 !important;
+}
+
+/* Total area */
+.currentOrderPanel .total,
+.currentOrderPanel .grand-total{
+  margin:5px 8px !important;
+  padding:9px !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:9px !important;
+  font-weight:700 !important;
+  box-sizing:border-box !important;
+}
+
+/* Clean scrollbar */
+#cart::-webkit-scrollbar{
+  width:5px !important;
+}
+
+#cart::-webkit-scrollbar-thumb{
+  background:#94a3b8 !important;
+  border-radius:10px !important;
+}
+</style>
+
+
+<style>
+/* ===== PREMIUM COMPACT RUNNING ORDERS ===== */
+
+.runningPanel{
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:12px !important;
+  box-sizing:border-box !important;
+}
+
+/* Header stays compact */
+.runningPanel > h2,
+.runningPanel > h3{
+  flex:0 0 auto !important;
+  margin:8px 10px !important;
+  padding-bottom:7px !important;
+  border-bottom:1px solid #e2e8f0 !important;
+}
+
+/* Orders scroll only inside panel */
+#pendingOrders{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow-y:auto !important;
+  padding:5px !important;
+}
+
+/* Individual running order cards */
+#pendingOrders > *,
+#pendingOrders .order-card,
+#pendingOrders .pending-order,
+#pendingOrders .running-order{
+  min-height:0 !important;
+  height:auto !important;
+  padding:7px !important;
+  margin:4px 0 !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:8px !important;
+  box-sizing:border-box !important;
+  box-shadow:0 1px 4px rgba(15,23,42,.08) !important;
+}
+
+/* Compact text */
+#pendingOrders h4,
+#pendingOrders h5,
+#pendingOrders p{
+  margin:2px 0 !important;
+  line-height:1.2 !important;
+}
+
+/* Compact action buttons */
+#pendingOrders button{
+  min-height:28px !important;
+  height:28px !important;
+  padding:4px 8px !important;
+  margin:2px !important;
+  border-radius:6px !important;
+}
+
+/* Scrollbar */
+#pendingOrders::-webkit-scrollbar{
+  width:5px !important;
+}
+
+#pendingOrders::-webkit-scrollbar-thumb{
+  background:#94a3b8 !important;
+  border-radius:10px !important;
+}
+</style>
+
+
+<style>
+/* ===== PREMIUM POS HEADER & SEARCH ===== */
+
+.posWorkspace{
+  border-radius:14px !important;
+}
+
+/* Search inputs */
+.posWorkspace input[type="search"],
+.posWorkspace input[type="text"]{
+  height:38px !important;
+  min-height:38px !important;
+  padding:8px 12px !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:9px !important;
+  box-sizing:border-box !important;
+  outline:none !important;
+}
+
+.posWorkspace input[type="search"]:focus,
+.posWorkspace input[type="text"]:focus{
+  border-color:#64748b !important;
+  box-shadow:0 0 0 2px rgba(100,116,139,.12) !important;
+}
+
+/* Category container */
+.categoriesPanel{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-content:flex-start !important;
+  gap:3px !important;
+}
+
+/* Category buttons */
+.categoriesPanel button{
+  flex:0 0 auto !important;
+  min-width:60px !important;
+  max-width:150px !important;
+  white-space:nowrap !important;
+  font-size:13px !important;
+  font-weight:600 !important;
+}
+
+/* Section headings */
+.posWorkspace h2,
+.posWorkspace h3{
+  line-height:1.2 !important;
+}
+
+/* General POS buttons */
+.posWorkspace button{
+  transition:transform .12s ease, box-shadow .12s ease !important;
+}
+
+.posWorkspace button:active{
+  transform:scale(.97) !important;
+}
+
+/* Clean panel edges */
+.posWorkspace > .panel,
+.centerWorkspace{
+  border-radius:12px !important;
+  box-sizing:border-box !important;
+}
+</style>
+
+
+<style>
+/* ===== PREMIUM POS ACTION BUTTONS ===== */
+
+.posWorkspace button{
+  border-radius:8px !important;
+  font-weight:600 !important;
+  line-height:1.15 !important;
+  box-sizing:border-box !important;
+  cursor:pointer !important;
+}
+
+/* Product Add buttons */
+#products button{
+  min-height:30px !important;
+  height:30px !important;
+  padding:5px 9px !important;
+  font-size:12px !important;
+}
+
+/* Running Order actions */
+#pendingOrders button{
+  min-height:29px !important;
+  height:29px !important;
+  padding:5px 8px !important;
+  font-size:12px !important;
+}
+
+/* Current Order actions */
+#cart button{
+  min-height:29px !important;
+  height:29px !important;
+  padding:5px 8px !important;
+  font-size:12px !important;
+}
+
+/* Bottom / main POS action buttons */
+.currentOrderPanel button{
+  min-height:36px !important;
+  padding:8px 12px !important;
+  margin:3px !important;
+  font-size:13px !important;
+}
+
+/* Make important action area neat */
+.currentOrderPanel > button,
+.currentOrderPanel .actions button{
+  border-radius:9px !important;
+  font-weight:700 !important;
+}
+
+/* Touch feedback */
+.posWorkspace button:active{
+  transform:scale(.96) !important;
+}
+
+/* Prevent button text from breaking */
+.posWorkspace button{
+  white-space:nowrap !important;
+}
+</style>
+
+
+<style>
+/* ===== PREMIUM CHECKOUT / ORDER SUMMARY ===== */
+
+.currentOrderPanel{
+  position:relative !important;
+}
+
+/* Summary rows */
+.currentOrderPanel .summary,
+.currentOrderPanel .order-summary,
+.currentOrderPanel .totals,
+.currentOrderPanel .checkout-summary{
+  border-top:1px solid #cbd5e1 !important;
+  margin-top:6px !important;
+  padding:7px !important;
+}
+
+/* Total values */
+.currentOrderPanel .total,
+.currentOrderPanel .grand-total,
+.currentOrderPanel .total-row{
+  font-size:15px !important;
+  font-weight:700 !important;
+  padding:7px 9px !important;
+  margin:3px 0 !important;
+  border-radius:8px !important;
+}
+
+/* Checkout inputs */
+.currentOrderPanel input,
+.currentOrderPanel select{
+  height:34px !important;
+  min-height:34px !important;
+  padding:6px 9px !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:8px !important;
+  box-sizing:border-box !important;
+  outline:none !important;
+}
+
+.currentOrderPanel input:focus,
+.currentOrderPanel select:focus{
+  border-color:#64748b !important;
+  box-shadow:0 0 0 2px rgba(100,116,139,.12) !important;
+}
+
+/* Main checkout buttons */
+.currentOrderPanel button{
+  font-weight:700 !important;
+}
+
+/* Keep checkout area visible */
+.currentOrderPanel > :last-child{
+  flex-shrink:0 !important;
+}
+</style>
+
+
+<style>
+/* ===== FINAL POS VISUAL POLISH ===== */
+
+.posWorkspace{
+  background:#f1f5f9 !important;
+  padding:6px !important;
+  gap:7px !important;
+}
+
+/* All main panels */
+.posWorkspace > .panel,
+.centerWorkspace{
+  background:#ffffff !important;
+  border:1px solid #cbd5e1 !important;
+  border-radius:12px !important;
+  box-shadow:0 2px 8px rgba(15,23,42,.08) !important;
+}
+
+/* Panel headings */
+.posWorkspace h2,
+.posWorkspace h3{
+  font-weight:700 !important;
+  margin-top:8px !important;
+}
+
+/* Category section */
+.categoriesPanel{
+  background:#f8fafc !important;
+  border-color:#cbd5e1 !important;
+}
+
+/* Products section */
+.productsPanel{
+  background:#f8fafc !important;
+  border-color:#cbd5e1 !important;
+}
+
+/* Product cards */
+#products > *{
+  background:#ffffff !important;
+  border-color:#d1d5db !important;
+}
+
+/* Running order cards */
+#pendingOrders > *{
+  background:#ffffff !important;
+  border-color:#d1d5db !important;
+}
+
+/* Cart cards */
+#cart > *{
+  background:#ffffff !important;
+  border-color:#d1d5db !important;
+}
+
+/* Consistent hover */
+#products > *:hover,
+#pendingOrders > *:hover,
+#cart > *:hover{
+  box-shadow:0 3px 9px rgba(15,23,42,.13) !important;
+}
+
+/* Clean scrollbar */
+#products::-webkit-scrollbar,
+#pendingOrders::-webkit-scrollbar,
+#cart::-webkit-scrollbar{
+  width:5px !important;
+}
+
+#products::-webkit-scrollbar-thumb,
+#pendingOrders::-webkit-scrollbar-thumb,
+#cart::-webkit-scrollbar-thumb{
+  background:#94a3b8 !important;
+  border-radius:10px !important;
+}
+</style>
+
+
+<style>
+/* ===== EXACT POS POLISH — REAL HTML STRUCTURE ===== */
+
+.posWorkspace{
+  display:grid !important;
+  grid-template-columns:0.85fr 1.65fr 0.95fr !important;
+  gap:8px !important;
+  padding:7px !important;
+  background:#eef2f7 !important;
+}
+
+/* MAIN PANELS */
+.posWorkspace > .panel,
+.centerWorkspace > .panel{
+  border:1px solid #b8c4d1 !important;
+  border-radius:10px !important;
+  background:#fff !important;
+  box-shadow:0 2px 7px rgba(0,0,0,.08) !important;
+}
+
+/* PANEL HEADERS */
+.posWorkspace h3{
+  margin:0 !important;
+  padding:9px 11px !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+  border-bottom:1px solid #d5dde6 !important;
+}
+
+/* CATEGORIES PANEL */
+.categoriesPanel{
+  max-height:125px !important;
+  padding:0 !important;
+  overflow:hidden !important;
+}
+
+#categories{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-content:flex-start !important;
+  gap:5px !important;
+  padding:7px !important;
+  overflow-y:auto !important;
+  max-height:78px !important;
+}
+
+/* CATEGORY BUTTONS */
+#categories button{
+  width:auto !important;
+  min-width:0 !important;
+  height:31px !important;
+  min-height:31px !important;
+  padding:5px 10px !important;
+  margin:0 !important;
+  border-radius:7px !important;
+  border:1px solid #c5ced8 !important;
+  font-size:12px !important;
+  font-weight:600 !important;
+  white-space:nowrap !important;
+  box-shadow:none !important;
+}
+
+/* PRODUCTS PANEL */
+.productsPanel{
+  padding:0 !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+
+#products{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fill,minmax(125px,1fr)) !important;
+  gap:6px !important;
+  padding:7px !important;
+  align-content:start !important;
+  overflow-y:auto !important;
+}
+
+/* ACTUAL PRODUCT CARDS */
+#products > div{
+  min-height:0 !important;
+  height:auto !important;
+  padding:7px !important;
+  margin:0 !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:8px !important;
+  background:#fff !important;
+  box-shadow:0 1px 4px rgba(0,0,0,.07) !important;
+}
+
+/* PRODUCT TEXT */
+#products > div h4,
+#products > div h5,
+#products > div p{
+  margin:2px 0 !important;
+  line-height:1.15 !important;
+  font-size:12px !important;
+}
+
+/* PRODUCT BUTTON */
+#products > div button{
+  height:29px !important;
+  min-height:29px !important;
+  padding:4px 8px !important;
+  margin:2px 0 0 !important;
+  border-radius:6px !important;
+  font-size:11px !important;
+}
+
+/* RUNNING ORDERS */
+.runningPanel{
+  padding:0 !important;
+  overflow:hidden !important;
+}
+
+#pendingOrders{
+  padding:6px !important;
+  overflow-y:auto !important;
+}
+
+#pendingOrders > div{
+  margin:4px 0 !important;
+  padding:7px !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:8px !important;
+  background:#fff !important;
+}
+
+/* CURRENT ORDER */
+.currentOrderPanel{
+  padding:0 !important;
+  overflow:hidden !important;
+}
+
+#cart{
+  padding:6px !important;
+  overflow-y:auto !important;
+}
+
+#cart > div{
+  margin:4px 0 !important;
+  padding:7px !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:8px !important;
+}
+
+/* TOTAL */
+.currentOrderPanel .total{
+  margin:6px !important;
+  padding:9px !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:8px !important;
+  font-weight:700 !important;
+}
+
+/* PLACE ORDER */
+.currentOrderPanel .mainbtn{
+  margin:6px !important;
+  width:calc(100% - 12px) !important;
+  min-height:38px !important;
+  border-radius:8px !important;
+  font-weight:700 !important;
+}
+
+/* SCROLLBARS */
+#categories::-webkit-scrollbar,
+#products::-webkit-scrollbar,
+#pendingOrders::-webkit-scrollbar,
+#cart::-webkit-scrollbar{
+  width:5px !important;
+}
+
+#categories::-webkit-scrollbar-thumb,
+#products::-webkit-scrollbar-thumb,
+#pendingOrders::-webkit-scrollbar-thumb,
+#cart::-webkit-scrollbar-thumb{
+  background:#aab6c3 !important;
+  border-radius:10px !important;
+}
+</style>
+
+
+<script>
+/* ===== QUICK PRODUCT SEARCH ===== */
+
+document.addEventListener("input", function(e){
+  if(e.target.id !== "productSearch") return;
+
+  const q = e.target.value.trim().toLowerCase();
+  const box = document.getElementById("products");
+  if(!box) return;
+
+  box.querySelectorAll(":scope > div").forEach(card => {
+    const text = (card.textContent || "").toLowerCase();
+    card.style.display = (!q || text.includes(q)) ? "" : "none";
+  });
+});
+</script>
+
+<style>
+/* ===== PRODUCT SEARCH BAR ===== */
+
+#productSearch{
+  display:block !important;
+  width:calc(100% - 14px) !important;
+  height:34px !important;
+  margin:6px 7px !important;
+  padding:7px 10px !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:8px !important;
+  background:#fff !important;
+  box-sizing:border-box !important;
+  font-size:12px !important;
+  outline:none !important;
+}
+
+#productSearch:focus{
+  border-color:#64748b !important;
+  box-shadow:0 0 0 2px rgba(100,116,139,.12) !important;
+}
+</style>
+
+
+<style>
+/* ===== COMPACT PROFESSIONAL ORDER DETAILS ===== */
+
+body{
+  overflow-x:hidden !important;
+}
+
+/* Order Details main panel */
+.pos > .panel[style*="grid-column:1/-1"]{
+  padding:0 !important;
+  margin-bottom:7px !important;
+  border:1px solid #b8c4d1 !important;
+  border-radius:10px !important;
+  background:#fff !important;
+  box-shadow:0 2px 7px rgba(0,0,0,.07) !important;
+}
+
+/* Header */
+.pos > .panel[style*="grid-column:1/-1"] > h3{
+  margin:0 !important;
+  padding:8px 11px !important;
+  font-size:14px !important;
+  border-bottom:1px solid #d5dde6 !important;
+}
+
+/* Fields container */
+.pos > .panel[style*="grid-column:1/-1"] > div{
+  padding:7px !important;
+  gap:6px !important;
+}
+
+/* Inputs + select */
+#customerName,
+#customerPhone,
+#orderType,
+#tableNo,
+#orderTakerName,
+#orderTakerPhone,
+#riderName,
+#riderPhone{
+  width:100% !important;
+  height:34px !important;
+  min-height:34px !important;
+  padding:6px 9px !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:7px !important;
+  box-sizing:border-box !important;
+  font-size:12px !important;
+  outline:none !important;
+}
+
+/* Delivery + notes */
+#deliveryAddress{
+  width:100% !important;
+  height:34px !important;
+  min-height:34px !important;
+  padding:6px 9px !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:7px !important;
+  box-sizing:border-box !important;
+  font-size:12px !important;
+}
+
+#orderNotes{
+  width:100% !important;
+  min-height:45px !important;
+  height:45px !important;
+  padding:7px 9px !important;
+  border:1px solid #c5ced8 !important;
+  border-radius:7px !important;
+  box-sizing:border-box !important;
+  font-size:12px !important;
+  resize:none !important;
+}
+
+/* Focus */
+#customerName:focus,
+#customerPhone:focus,
+#orderType:focus,
+#tableNo:focus,
+#orderTakerName:focus,
+#orderTakerPhone:focus,
+#riderName:focus,
+#riderPhone:focus,
+#deliveryAddress:focus,
+#orderNotes:focus{
+  border-color:#64748b !important;
+  box-shadow:0 0 0 2px rgba(100,116,139,.10) !important;
+}
+
+/* Mobile */
+@media(max-width:600px){
+  .pos > .panel[style*="grid-column:1/-1"] > div{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  #deliveryAddress,
+  #orderNotes{
+    grid-column:1/-1 !important;
+  }
+}
+</style>
+
+
+<script>
+/* ===== LOAD ORDER TAKER / TRACKER NAMES ===== */
+
+async function loadOrderTakerDropdown(){
+
+  const select=document.getElementById("orderTakerName");
+  if(!select) return;
+
+  const current=select.value;
+
+  try{
+
+    const r=await fetch("/api/order-takers?restaurant_id=1");
+    const list=await r.json();
+
+    if(!Array.isArray(list)) return;
+
+    select.innerHTML=`
+      <option value="">👨‍💼 Select Order Taker / Tracker</option>
+    `;
+
+    list.forEach(x=>{
+      const option=document.createElement("option");
+      option.value=x.name;
+      option.textContent="👤 "+x.name;
+      option.dataset.phone=x.phone||"";
+      select.appendChild(option);
+    });
+
+    if(current){
+      const found=[...select.options].find(o=>o.value===current);
+      if(found) select.value=current;
+    }
+
+  }catch(e){
+    console.error("Order Taker load error:",e);
+  }
+}
+
+
+/* Auto-fill phone when a saved Order Taker is selected */
+document.addEventListener("change",function(e){
+
+  if(e.target.id!=="orderTakerName") return;
+
+  const option=e.target.options[e.target.selectedIndex];
+  const phone=option?.dataset?.phone||"";
+  const phoneBox=document.getElementById("orderTakerPhone");
+
+  if(phoneBox && phone){
+    phoneBox.value=phone;
+  }
+});
+
+
+/* Load when Cashier page opens */
+document.addEventListener("DOMContentLoaded",function(){
+  loadOrderTakerDropdown();
+});
+</script>
+
