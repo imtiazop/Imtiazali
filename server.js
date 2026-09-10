@@ -5,7 +5,7 @@ const initSqlJs = require("sql.js");
 const fs = require("fs");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const DB_FILE = "ms-restaurant-manager.db";
 const managerSessions = new Map();
 const ownerSessions = new Map();
