@@ -4938,7 +4938,7 @@ app.post("/api/staff/manager-notifications/:id/read", (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log("=================================");
     console.log("👑 MS RESTAURANT MANAGER 👑");
     console.log(`🖥️ Server: http://localhost:${PORT}`);
