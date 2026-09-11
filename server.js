@@ -12,6 +12,7 @@ const ownerSessions = new Map();
 
 app.use(express.json({ limit: "3mb" }));
 app.use(express.static(__dirname));
+app.get("/", (req, res) => res.sendFile(__dirname + "/admin.html"));
 
 async function startServer() {
   const SQL = await initSqlJs();
