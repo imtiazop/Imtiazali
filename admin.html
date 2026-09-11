@@ -104,6 +104,34 @@
   <p>Admin Control Panel</p>
 </header>
 
+<section id="ownerLoginBox" class="card" style="max-width:500px;margin:25px auto;">
+  <h2>🔐 Owner Login</h2>
+
+  <input
+    id="ownerUsername"
+    type="text"
+    placeholder="Owner Username"
+    style="width:100%;padding:12px;margin-top:15px;margin-bottom:10px;"
+  >
+
+  <input
+    id="ownerPassword"
+    type="password"
+    placeholder="Owner Password"
+    style="width:100%;padding:12px;margin-bottom:10px;"
+  >
+
+  <button
+    onclick="ownerLogin()"
+    style="padding:12px 20px;cursor:pointer;"
+  >
+    Login
+  </button>
+
+  <p id="ownerLoginMessage" style="margin-top:12px;"></p>
+</section>
+
+<div id="adminContent">
 <div class="container">
 
   <div class="grid">
@@ -166,6 +194,8 @@
 
 </div>
 
+</div>
+
 <footer>
   MS Restaurant Manager © 2026
 </footer>
@@ -209,10 +239,61 @@
 </section>
 
 <script>
-async function loadRestaurants() {
-  const response = await fetch("/api/restaurants");
-  const restaurants = await response.json();
+const ownerToken = sessionStorage.getItem("ownerToken");
 
+async function ownerLogin() {
+  const username = document.getElementById("ownerUsername").value.trim();
+  const password = document.getElementById("ownerPassword").value;
+  const msg = document.getElementById("ownerLoginMessage");
+
+  if (!username || !password) {
+    msg.textContent = "Username and password required";
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/owner-login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      msg.textContent = data.error || "Login failed";
+      return;
+    }
+
+    sessionStorage.setItem("ownerToken", data.token);
+    location.reload();
+
+  } catch (error) {
+    msg.textContent = "Server connection failed";
+  }
+}
+
+function authHeaders() {
+  const token = sessionStorage.getItem("ownerToken");
+  return token ? { "Authorization": "Bearer " + token } : {};
+}
+
+async function loadRestaurants() {
+  const response = await fetch("/api/restaurants", {
+    headers: authHeaders()
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    document.getElementById("restaurantList").innerHTML =
+      "<p>Owner login required.</p>";
+    return;
+  }
+
+  const restaurants = data;
   const list = document.getElementById("restaurantList");
 
   if (!restaurants.length) {
@@ -232,10 +313,19 @@ async function loadRestaurants() {
 document.getElementById("restaurantForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
+  const token = sessionStorage.getItem("ownerToken");
+
+  if (!token) {
+    document.getElementById("restaurantMessage").textContent =
+      "❌ Please login as owner first.";
+    return;
+  }
+
   const response = await fetch("/api/restaurants", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
     },
     body: JSON.stringify({
       name: document.getElementById("restaurantName").value,
@@ -255,7 +345,13 @@ document.getElementById("restaurantForm").addEventListener("submit", async (e) =
   }
 });
 
-loadRestaurants();
+if (ownerToken) {
+  document.getElementById("ownerLoginBox").style.display = "none";
+  document.getElementById("adminContent").style.display = "block";
+  loadRestaurants();
+} else {
+  document.getElementById("adminContent").style.display = "none";
+}
 </script>
 </body>
 </html>
