@@ -4939,6 +4939,34 @@ app.post("/api/staff/manager-notifications/:id/read", (req, res) => {
   }
 });
 
+  try {
+    const ownerCheck = db.exec(`
+      SELECT id FROM users
+      WHERE username = 'admin' AND role = 'owner'
+      LIMIT 1
+    `);
+
+    if (!ownerCheck.length || !ownerCheck[0].values.length) {
+      const crypto = require("crypto");
+      const ownerHash =
+        "sha256$" +
+        crypto.createHash("sha256")
+          .update("Admin@2026", "utf8")
+          .digest("hex");
+
+      db.run(
+        `INSERT INTO users (restaurant_id, username, password, role)
+         VALUES (NULL, ?, ?, 'owner')`,
+        ["admin", ownerHash]
+      );
+
+      saveDatabase();
+      console.log("👑 Default owner account created");
+    }
+  } catch (e) {
+    console.error("Owner setup error:", e.message);
+  }
+
 app.listen(PORT, "0.0.0.0", () => {
     console.log("=================================");
     console.log("👑 MS RESTAURANT MANAGER 👑");
